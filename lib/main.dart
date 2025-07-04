@@ -7,43 +7,114 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  _MyAppState createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadThemePreference();
+  }
+
+  Future<void> _loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isDarkMode = prefs.getBool('isDarkMode') ?? true;
+    });
+  }
+
+  Future<void> _saveThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
+  }
+
+  void _toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+    _saveThemePreference();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Sistema de Cotizaciones',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: Color(0xFF1A1A1A),
-        cardColor: Color(0xFF2D2D2D),
-        appBarTheme: AppBarTheme(
-          backgroundColor: Color(0xFF2D2D2D),
-          elevation: 0,
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Color(0xFF1976D2),
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Color(0xFF3A3A3A),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Color(0xFF1976D2)),
+      theme: isDarkMode ? _darkTheme() : _lightTheme(),
+      home: CotizadorApp(toggleTheme: _toggleTheme, isDarkMode: isDarkMode),
+    );
+  }
+
+  ThemeData _darkTheme() {
+    return ThemeData(
+      primarySwatch: Colors.blue,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: Color(0xFF1A1A1A),
+      cardColor: Color(0xFF2D2D2D),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Color(0xFF2D2D2D),
+        elevation: 0,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF1976D2),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
           ),
         ),
       ),
-      home: CotizadorApp(),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Color(0xFF3A3A3A),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: Color(0xFF1976D2)),
+        ),
+      ),
+    );
+  }
+
+  ThemeData _lightTheme() {
+    return ThemeData(
+      primarySwatch: Colors.blue,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: Color(0xFFF5F5F5),
+      cardColor: Colors.white,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Color(0xFF1976D2),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Color(0xFFF0F0F0),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.zero,
+          borderSide: BorderSide(color: Color(0xFF1976D2)),
+        ),
+      ),
     );
   }
 }
@@ -70,6 +141,7 @@ class ItemCotizacion {
   double cantidad;
   double ancho;
   double alto;
+  double adicional;
   double costo;
 
   ItemCotizacion({
@@ -77,6 +149,7 @@ class ItemCotizacion {
     required this.cantidad,
     required this.ancho,
     required this.alto,
+    required this.adicional,
     required this.costo,
   });
 
@@ -85,6 +158,7 @@ class ItemCotizacion {
         'cantidad': cantidad,
         'ancho': ancho,
         'alto': alto,
+        'adicional': adicional,
         'costo': costo,
       };
 
@@ -93,11 +167,17 @@ class ItemCotizacion {
         cantidad: json['cantidad'].toDouble(),
         ancho: json['ancho'].toDouble(),
         alto: json['alto'].toDouble(),
+        adicional: json['adicional']?.toDouble() ?? 0.0,
         costo: json['costo'].toDouble(),
       );
 }
 
 class CotizadorApp extends StatefulWidget {
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
+
+  CotizadorApp({required this.toggleTheme, required this.isDarkMode});
+
   @override
   _CotizadorAppState createState() => _CotizadorAppState();
 }
@@ -109,6 +189,7 @@ class _CotizadorAppState extends State<CotizadorApp> {
   final TextEditingController anchoController = TextEditingController();
   final TextEditingController altoController = TextEditingController();
   final TextEditingController cantidadController = TextEditingController();
+  final TextEditingController adicionalController = TextEditingController();
 
   String? tipoSeleccionado;
   double subtotal = 0.0;
@@ -124,6 +205,7 @@ class _CotizadorAppState extends State<CotizadorApp> {
     anchoController.addListener(_actualizarSubtotal);
     altoController.addListener(_actualizarSubtotal);
     cantidadController.addListener(_actualizarSubtotal);
+    adicionalController.addListener(_actualizarSubtotal);
   }
 
   Future<void> _cargarDatos() async {
@@ -164,7 +246,9 @@ class _CotizadorAppState extends State<CotizadorApp> {
       final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
       final ancho = double.tryParse(anchoController.text) ?? 0.0;
       final alto = double.tryParse(altoController.text) ?? 0.0;
-      setState(() => subtotal = cantidad * ancho * alto * trabajo.costo);
+      final adicional = double.tryParse(adicionalController.text) ?? 0.0;
+      setState(() =>
+          subtotal = (cantidad * ancho * alto * trabajo.costo) + adicional);
     } catch (e) {
       setState(() => subtotal = 0.0);
     }
@@ -179,7 +263,8 @@ class _CotizadorAppState extends State<CotizadorApp> {
       final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
       final ancho = double.tryParse(anchoController.text) ?? 0.0;
       final alto = double.tryParse(altoController.text) ?? 0.0;
-      final costo = cantidad * ancho * alto * trabajo.costo;
+      final adicional = double.tryParse(adicionalController.text) ?? 0.0;
+      final costo = (cantidad * ancho * alto * trabajo.costo) + adicional;
 
       if (costo <= 0) return;
 
@@ -189,6 +274,7 @@ class _CotizadorAppState extends State<CotizadorApp> {
           cantidad: cantidad,
           ancho: ancho,
           alto: alto,
+          adicional: adicional,
           costo: costo,
         ));
       });
@@ -203,6 +289,7 @@ class _CotizadorAppState extends State<CotizadorApp> {
     anchoController.clear();
     altoController.clear();
     cantidadController.clear();
+    adicionalController.clear();
     _actualizarSubtotal();
   }
 
@@ -236,11 +323,19 @@ class _CotizadorAppState extends State<CotizadorApp> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sistema de Cotizaciones Profesional'),
+        title: Text('Cotizaciones'),
         actions: [
+          IconButton(
+            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: widget.toggleTheme,
+            tooltip: widget.isDarkMode
+                ? 'Cambiar a modo claro'
+                : 'Cambiar a modo oscuro',
+          ),
           IconButton(
             icon: Icon(Icons.settings),
             onPressed: () => _mostrarGestionTrabajos(),
+            tooltip: 'Gestionar tipos de trabajo',
           ),
         ],
       ),
@@ -255,6 +350,10 @@ class _CotizadorAppState extends State<CotizadorApp> {
           flex: 1,
           child: _buildFormularioEntrada(),
         ),
+        Container(
+          width: 1,
+          color: Theme.of(context).dividerColor,
+        ),
         Expanded(
           flex: 2,
           child: _buildResumenCotizacion(),
@@ -267,17 +366,26 @@ class _CotizadorAppState extends State<CotizadorApp> {
     return Column(
       children: [
         _buildFormularioEntrada(),
+        Container(
+          height: 1,
+          color: Theme.of(context).dividerColor,
+        ),
         Expanded(child: _buildResumenCotizacion()),
       ],
     );
   }
 
   Widget _buildFormularioEntrada() {
+    final isDesktop = MediaQuery.of(context).size.width > 768;
+
     return Container(
-      padding: EdgeInsets.all(16),
       child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: Padding(
-          padding: EdgeInsets.all(16),
+          padding: EdgeInsets.all(isDesktop ? 24 : 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -287,13 +395,17 @@ class _CotizadorAppState extends State<CotizadorApp> {
                       fontWeight: FontWeight.bold,
                     ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: isDesktop ? 16 : 12),
               if (tiposDeTrabajos.isNotEmpty) ...[
                 DropdownButtonFormField<String>(
                   value: tipoSeleccionado,
                   decoration: InputDecoration(
                     labelText: 'Tipo de Trabajo',
                     prefixIcon: Icon(Icons.work),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: isDesktop ? 16 : 12,
+                    ),
                   ),
                   items: tiposDeTrabajos.keys.map((String value) {
                     return DropdownMenuItem<String>(
@@ -308,78 +420,192 @@ class _CotizadorAppState extends State<CotizadorApp> {
                     _actualizarSubtotal();
                   },
                 ),
-                SizedBox(height: 16),
+                SizedBox(height: isDesktop ? 16 : 12),
               ],
-              Row(
-                children: [
-                  Expanded(
-                    child: TextFormField(
-                      controller: anchoController,
-                      decoration: InputDecoration(
-                        labelText: 'Ancho (m)',
-                        prefixIcon: Icon(Icons.straighten),
+              // Agrupar Ancho, Alto y Cantidad en una sola fila en desktop, dos filas en móvil
+              if (isDesktop) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: anchoController,
+                        decoration: InputDecoration(
+                          labelText: 'Ancho (m)',
+                          prefixIcon: Icon(Icons.straighten),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')),
-                      ],
                     ),
-                  ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: TextFormField(
-                      controller: altoController,
-                      decoration: InputDecoration(
-                        labelText: 'Alto (m)',
-                        prefixIcon: Icon(Icons.height),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: altoController,
+                        decoration: InputDecoration(
+                          labelText: 'Alto (m)',
+                          prefixIcon: Icon(Icons.height),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
                       ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d*')),
-                      ],
                     ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 16),
-              TextFormField(
-                controller: cantidadController,
-                decoration: InputDecoration(
-                  labelText: 'Cantidad',
-                  prefixIcon: Icon(Icons.numbers),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: cantidadController,
+                        decoration: InputDecoration(
+                          labelText: 'Cantidad',
+                          prefixIcon: Icon(Icons.numbers),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-                ],
-              ),
-              SizedBox(height: 24),
+              ] else ...[
+                // Versión móvil: Ancho y Alto en una fila, Cantidad y Adicional en otra
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: anchoController,
+                        decoration: InputDecoration(
+                          labelText: 'Ancho (m)',
+                          prefixIcon: Icon(Icons.straighten),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: altoController,
+                        decoration: InputDecoration(
+                          labelText: 'Alto (m)',
+                          prefixIcon: Icon(Icons.height),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: cantidadController,
+                        decoration: InputDecoration(
+                          labelText: 'Cantidad',
+                          prefixIcon: Icon(Icons.numbers),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.next,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: adicionalController,
+                        decoration: InputDecoration(
+                          labelText: 'Adicional (Bs)',
+                          prefixIcon: Icon(Icons.add_circle_outline),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
+                        ),
+                        keyboardType: TextInputType.number,
+                        textInputAction: TextInputAction.done,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d*\.?\d*')),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              if (isDesktop) ...[
+                SizedBox(height: 16),
+                TextFormField(
+                  controller: adicionalController,
+                  decoration: InputDecoration(
+                    labelText: 'Adicional (Bs)',
+                    prefixIcon: Icon(Icons.add_circle_outline),
+                  ),
+                  keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.done,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
+                ),
+              ],
+              SizedBox(height: isDesktop ? 24 : 16),
               Container(
-                padding: EdgeInsets.all(16),
+                padding: EdgeInsets.all(isDesktop ? 16 : 12),
                 decoration: BoxDecoration(
                   color: Color(0xFF1976D2).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: Color(0xFF1976D2)),
                 ),
                 child: Text(
                   'Bs ${subtotal.toStringAsFixed(2)}',
                   style: TextStyle(
-                    fontSize: 24,
+                    fontSize: isDesktop ? 24 : 20,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF1976D2),
                   ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              SizedBox(height: 16),
+              SizedBox(height: isDesktop ? 16 : 12),
               ElevatedButton.icon(
                 onPressed: _anadirItem,
                 icon: Icon(Icons.add),
                 label: Text('Añadir a la Cotización'),
                 style: ElevatedButton.styleFrom(
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                    vertical: isDesktop ? 16 : 12,
+                  ),
                 ),
               ),
             ],
@@ -391,8 +617,11 @@ class _CotizadorAppState extends State<CotizadorApp> {
 
   Widget _buildResumenCotizacion() {
     return Container(
-      padding: EdgeInsets.all(16),
       child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
         child: Column(
           children: [
             Padding(
@@ -451,13 +680,16 @@ class _CotizadorAppState extends State<CotizadorApp> {
 
                     return Card(
                       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
                       child: ListTile(
                         title: Text(
                           item.tipo,
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(
-                            '${item.ancho}m × ${item.alto}m × ${item.cantidad}'),
+                            '${item.ancho}m × ${item.alto}m × ${item.cantidad}${item.adicional > 0 ? ' + Bs${item.adicional.toStringAsFixed(2)}' : ''}'),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -521,21 +753,24 @@ class _CotizadorAppState extends State<CotizadorApp> {
   }
 
   void _mostrarGestionTrabajos() {
-    showDialog(
-      context: context,
-      builder: (context) => GestionTrabajosDialog(
-        tiposDeTrabajos: tiposDeTrabajos,
-        onSave: (nuevosTipos) {
-          setState(() {
-            tiposDeTrabajos = nuevosTipos;
-            if (tiposDeTrabajos.isNotEmpty &&
-                !tiposDeTrabajos.containsKey(tipoSeleccionado)) {
-              tipoSeleccionado = tiposDeTrabajos.keys.first;
-            }
-          });
-          _guardarDatos();
-          _actualizarSubtotal();
-        },
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => GestionTrabajosDialog(
+          tiposDeTrabajos: tiposDeTrabajos,
+          toggleTheme: widget.toggleTheme,
+          isDarkMode: widget.isDarkMode,
+          onSave: (nuevosTipos) {
+            setState(() {
+              tiposDeTrabajos = nuevosTipos;
+              if (tiposDeTrabajos.isNotEmpty &&
+                  !tiposDeTrabajos.containsKey(tipoSeleccionado)) {
+                tipoSeleccionado = tiposDeTrabajos.keys.first;
+              }
+            });
+            _guardarDatos();
+            _actualizarSubtotal();
+          },
+        ),
       ),
     );
   }
@@ -544,8 +779,15 @@ class _CotizadorAppState extends State<CotizadorApp> {
 class GestionTrabajosDialog extends StatefulWidget {
   final Map<String, TipoTrabajo> tiposDeTrabajos;
   final Function(Map<String, TipoTrabajo>) onSave;
+  final VoidCallback toggleTheme;
+  final bool isDarkMode;
 
-  GestionTrabajosDialog({required this.tiposDeTrabajos, required this.onSave});
+  GestionTrabajosDialog({
+    required this.tiposDeTrabajos,
+    required this.onSave,
+    required this.toggleTheme,
+    required this.isDarkMode,
+  });
 
   @override
   _GestionTrabajosDialogState createState() => _GestionTrabajosDialogState();
@@ -565,166 +807,228 @@ class _GestionTrabajosDialogState extends State<GestionTrabajosDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      child: Container(
-        width: MediaQuery.of(context).size.width * 0.9,
-        height: MediaQuery.of(context).size.height * 0.8,
-        child: Column(
-          children: [
-            AppBar(
-              title: Text('Gestionar Tipos de Trabajo'),
-              automaticallyImplyLeading: false,
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    widget.onSave(tiposLocales);
-                    Navigator.of(context).pop();
-                  },
-                  child: Text('GUARDAR', style: TextStyle(color: Colors.white)),
-                ),
-                IconButton(
-                  icon: Icon(Icons.close),
-                  onPressed: () => Navigator.of(context).pop(),
-                ),
-              ],
+    final isDesktop = MediaQuery.of(context).size.width > 768;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Gestionar Tipos de Trabajo'),
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: widget.toggleTheme,
+            tooltip: widget.isDarkMode
+                ? 'Cambiar a modo claro'
+                : 'Cambiar a modo oscuro',
+          ),
+          SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () {
+              widget.onSave(tiposLocales);
+              Navigator.of(context).pop();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
             ),
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildFormularioTrabajo(),
-                  ),
-                  Expanded(
-                    child: _buildListaTrabajos(),
-                  ),
-                ],
-              ),
+            child: Text('GUARDAR'),
+          ),
+          SizedBox(width: 8),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[600],
+              foregroundColor: Colors.white,
             ),
-          ],
-        ),
+            child: Text('CERRAR'),
+          ),
+          SizedBox(width: 16),
+        ],
       ),
+      body: isDesktop ? _buildDesktopLayout() : _buildMobileLayout(),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Row(
+      children: [
+        Expanded(
+          flex: 1,
+          child: _buildFormularioTrabajo(),
+        ),
+        Container(
+          width: 1,
+          color: Theme.of(context).dividerColor,
+        ),
+        Expanded(
+          flex: 1,
+          child: _buildListaTrabajos(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Column(
+      children: [
+        Expanded(
+          flex: 1,
+          child: _buildFormularioTrabajo(),
+        ),
+        Container(
+          height: 1,
+          color: Theme.of(context).dividerColor,
+        ),
+        Expanded(
+          flex: 1,
+          child: _buildListaTrabajos(),
+        ),
+      ],
     );
   }
 
   Widget _buildFormularioTrabajo() {
     return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Añadir/Editar Trabajo',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          SizedBox(height: 16),
-          TextFormField(
-            controller: nombreController,
-            decoration: InputDecoration(
-              labelText: 'Nombre del Trabajo',
-              prefixIcon: Icon(Icons.work),
-            ),
-          ),
-          SizedBox(height: 16),
-          TextFormField(
-            controller: costoController,
-            decoration: InputDecoration(
-              labelText: 'Costo (Bs)',
-              prefixIcon: Icon(Icons.attach_money),
-            ),
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-            ],
-          ),
-          SizedBox(height: 24),
-          Row(
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _anadirTrabajo,
-                  icon: Icon(Icons.add),
-                  label: Text('Añadir'),
-                ),
+              Text(
+                'Añadir/Editar Trabajo',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
-              SizedBox(width: 8),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed:
-                      tipoSeleccionado != null ? _actualizarTrabajo : null,
-                  icon: Icon(Icons.edit),
-                  label: Text('Actualizar'),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: nombreController,
+                decoration: InputDecoration(
+                  labelText: 'Nombre del Trabajo',
+                  prefixIcon: Icon(Icons.work),
+                ),
+                textInputAction: TextInputAction.next,
+              ),
+              SizedBox(height: 16),
+              TextFormField(
+                controller: costoController,
+                decoration: InputDecoration(
+                  labelText: 'Costo (Bs)',
+                  prefixIcon: Icon(Icons.attach_money),
+                ),
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                ],
+              ),
+              SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _anadirTrabajo,
+                      icon: Icon(Icons.add),
+                      label: Text('Añadir'),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed:
+                          tipoSeleccionado != null ? _actualizarTrabajo : null,
+                      icon: Icon(Icons.edit),
+                      label: Text('Actualizar'),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 8),
+              ElevatedButton.icon(
+                onPressed: tipoSeleccionado != null ? _eliminarTrabajo : null,
+                icon: Icon(Icons.delete),
+                label: Text('Eliminar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: tipoSeleccionado != null ? _eliminarTrabajo : null,
-            icon: Icon(Icons.delete),
-            label: Text('Eliminar'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildListaTrabajos() {
     return Container(
-      padding: EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Trabajos Existentes',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          SizedBox(height: 16),
-          Expanded(
-            child: tiposLocales.isEmpty
-                ? Center(
-                    child: Text(
-                      'No hay trabajos definidos',
-                      style: TextStyle(color: Colors.grey),
+      child: Card(
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Trabajos Existentes',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: tiposLocales.length,
-                    itemBuilder: (context, index) {
-                      final key = tiposLocales.keys.elementAt(index);
-                      final trabajo = tiposLocales[key]!;
-                      final isSelected = tipoSeleccionado == key;
-
-                      return Card(
-                        color: isSelected
-                            ? Color(0xFF1976D2).withOpacity(0.3)
-                            : null,
-                        child: ListTile(
-                          title: Text(
-                            trabajo.nombre,
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle:
-                              Text('Bs ${trabajo.costo.toStringAsFixed(2)}'),
-                          onTap: () {
-                            setState(() {
-                              tipoSeleccionado = key;
-                              nombreController.text = trabajo.nombre;
-                              costoController.text = trabajo.costo.toString();
-                            });
-                          },
+              ),
+              SizedBox(height: 16),
+              Expanded(
+                child: tiposLocales.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No hay trabajos definidos',
+                          style: TextStyle(color: Colors.grey),
                         ),
-                      );
-                    },
-                  ),
+                      )
+                    : ListView.builder(
+                        itemCount: tiposLocales.length,
+                        itemBuilder: (context, index) {
+                          final key = tiposLocales.keys.elementAt(index);
+                          final trabajo = tiposLocales[key]!;
+                          final isSelected = tipoSeleccionado == key;
+
+                          return Card(
+                            margin: EdgeInsets.symmetric(vertical: 4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.zero,
+                            ),
+                            color: isSelected
+                                ? Color(0xFF1976D2).withOpacity(0.3)
+                                : null,
+                            child: ListTile(
+                              title: Text(
+                                trabajo.nombre,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Text(
+                                  'Bs ${trabajo.costo.toStringAsFixed(2)}'),
+                              onTap: () {
+                                setState(() {
+                                  tipoSeleccionado = key;
+                                  nombreController.text = trabajo.nombre;
+                                  costoController.text =
+                                      trabajo.costo.toString();
+                                });
+                              },
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -799,6 +1103,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
   final TextEditingController anchoController = TextEditingController();
   final TextEditingController altoController = TextEditingController();
   final TextEditingController cantidadController = TextEditingController();
+  final TextEditingController adicionalController = TextEditingController();
 
   String? tipoSeleccionado;
   double subtotal = 0.0;
@@ -811,6 +1116,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
     anchoController.text = widget.item.ancho.toString();
     altoController.text = widget.item.alto.toString();
     cantidadController.text = widget.item.cantidad.toString();
+    adicionalController.text = widget.item.adicional.toString();
 
     _setupListeners();
     _actualizarSubtotal();
@@ -820,6 +1126,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
     anchoController.addListener(_actualizarSubtotal);
     altoController.addListener(_actualizarSubtotal);
     cantidadController.addListener(_actualizarSubtotal);
+    adicionalController.addListener(_actualizarSubtotal);
   }
 
   void _actualizarSubtotal() {
@@ -835,7 +1142,9 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
       final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
       final ancho = double.tryParse(anchoController.text) ?? 0.0;
       final alto = double.tryParse(altoController.text) ?? 0.0;
-      setState(() => subtotal = cantidad * ancho * alto * trabajo.costo);
+      final adicional = double.tryParse(adicionalController.text) ?? 0.0;
+      setState(() =>
+          subtotal = (cantidad * ancho * alto * trabajo.costo) + adicional);
     } catch (e) {
       setState(() => subtotal = 0.0);
     }
@@ -850,7 +1159,8 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
       final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
       final ancho = double.tryParse(anchoController.text) ?? 0.0;
       final alto = double.tryParse(altoController.text) ?? 0.0;
-      final costo = cantidad * ancho * alto * trabajo.costo;
+      final adicional = double.tryParse(adicionalController.text) ?? 0.0;
+      final costo = (cantidad * ancho * alto * trabajo.costo) + adicional;
 
       if (costo <= 0) return;
 
@@ -859,6 +1169,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
         cantidad: cantidad,
         ancho: ancho,
         alto: alto,
+        adicional: adicional,
         costo: costo,
       );
 
@@ -872,6 +1183,9 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.zero,
+      ),
       child: Container(
         width: 400,
         padding: EdgeInsets.all(24),
@@ -919,6 +1233,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                       prefixIcon: Icon(Icons.straighten),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
@@ -933,6 +1248,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                       prefixIcon: Icon(Icons.height),
                     ),
                     keyboardType: TextInputType.number,
+                    textInputAction: TextInputAction.next,
                     inputFormatters: [
                       FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
                     ],
@@ -948,6 +1264,20 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                 prefixIcon: Icon(Icons.numbers),
               ),
               keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.next,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: adicionalController,
+              decoration: InputDecoration(
+                labelText: 'Adicional (Bs)',
+                prefixIcon: Icon(Icons.add_circle_outline),
+              ),
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
               ],
@@ -957,7 +1287,6 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: Color(0xFF1976D2).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Color(0xFF1976D2)),
               ),
               child: Text(
@@ -976,6 +1305,11 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
                     child: Text('Cancelar'),
                   ),
                 ),
@@ -983,6 +1317,11 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: _guardarCambios,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                      ),
+                    ),
                     child: Text('Guardar'),
                   ),
                 ),
@@ -999,6 +1338,7 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
     anchoController.dispose();
     altoController.dispose();
     cantidadController.dispose();
+    adicionalController.dispose();
     super.dispose();
   }
 }
