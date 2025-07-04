@@ -212,6 +212,21 @@ class _CotizadorAppState extends State<CotizadorApp> {
     });
   }
 
+  void _editarItem(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => EditarItemDialog(
+        item: itemsCotizacion[index],
+        tiposDeTrabajos: tiposDeTrabajos,
+        onSave: (itemEditado) {
+          setState(() {
+            itemsCotizacion[index] = itemEditado;
+          });
+        },
+      ),
+    );
+  }
+
   double get total =>
       itemsCotizacion.fold(0.0, (sum, item) => sum + item.costo);
 
@@ -453,6 +468,10 @@ class _CotizadorAppState extends State<CotizadorApp> {
                                 fontSize: 16,
                                 color: Color(0xFF28B463),
                               ),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _editarItem(index),
                             ),
                             IconButton(
                               icon: Icon(Icons.delete, color: Colors.red),
@@ -758,5 +777,228 @@ class _GestionTrabajosDialogState extends State<GestionTrabajosDialog> {
     setState(() {
       tipoSeleccionado = null;
     });
+  }
+}
+
+class EditarItemDialog extends StatefulWidget {
+  final ItemCotizacion item;
+  final Map<String, TipoTrabajo> tiposDeTrabajos;
+  final Function(ItemCotizacion) onSave;
+
+  EditarItemDialog({
+    required this.item,
+    required this.tiposDeTrabajos,
+    required this.onSave,
+  });
+
+  @override
+  _EditarItemDialogState createState() => _EditarItemDialogState();
+}
+
+class _EditarItemDialogState extends State<EditarItemDialog> {
+  final TextEditingController anchoController = TextEditingController();
+  final TextEditingController altoController = TextEditingController();
+  final TextEditingController cantidadController = TextEditingController();
+
+  String? tipoSeleccionado;
+  double subtotal = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Inicializar con los valores del item actual
+    tipoSeleccionado = widget.item.tipo;
+    anchoController.text = widget.item.ancho.toString();
+    altoController.text = widget.item.alto.toString();
+    cantidadController.text = widget.item.cantidad.toString();
+
+    _setupListeners();
+    _actualizarSubtotal();
+  }
+
+  void _setupListeners() {
+    anchoController.addListener(_actualizarSubtotal);
+    altoController.addListener(_actualizarSubtotal);
+    cantidadController.addListener(_actualizarSubtotal);
+  }
+
+  void _actualizarSubtotal() {
+    if (tipoSeleccionado == null ||
+        !widget.tiposDeTrabajos.containsKey(tipoSeleccionado)) {
+      setState(() => subtotal = 0.0);
+      return;
+    }
+
+    try {
+      final trabajo = widget.tiposDeTrabajos.values
+          .firstWhere((t) => t.nombre == tipoSeleccionado);
+      final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
+      final ancho = double.tryParse(anchoController.text) ?? 0.0;
+      final alto = double.tryParse(altoController.text) ?? 0.0;
+      setState(() => subtotal = cantidad * ancho * alto * trabajo.costo);
+    } catch (e) {
+      setState(() => subtotal = 0.0);
+    }
+  }
+
+  void _guardarCambios() {
+    if (tipoSeleccionado == null) return;
+
+    try {
+      final trabajo = widget.tiposDeTrabajos.values
+          .firstWhere((t) => t.nombre == tipoSeleccionado);
+      final cantidad = double.tryParse(cantidadController.text) ?? 1.0;
+      final ancho = double.tryParse(anchoController.text) ?? 0.0;
+      final alto = double.tryParse(altoController.text) ?? 0.0;
+      final costo = cantidad * ancho * alto * trabajo.costo;
+
+      if (costo <= 0) return;
+
+      final itemEditado = ItemCotizacion(
+        tipo: trabajo.nombre,
+        cantidad: cantidad,
+        ancho: ancho,
+        alto: alto,
+        costo: costo,
+      );
+
+      widget.onSave(itemEditado);
+      Navigator.of(context).pop();
+    } catch (e) {
+      // Error handling
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Container(
+        width: 400,
+        padding: EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Editar Trabajo',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 24),
+            if (widget.tiposDeTrabajos.isNotEmpty) ...[
+              DropdownButtonFormField<String>(
+                value: tipoSeleccionado,
+                decoration: InputDecoration(
+                  labelText: 'Tipo de Trabajo',
+                  prefixIcon: Icon(Icons.work),
+                ),
+                items: widget.tiposDeTrabajos.values.map((trabajo) {
+                  return DropdownMenuItem<String>(
+                    value: trabajo.nombre,
+                    child: Text(trabajo.nombre),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    tipoSeleccionado = newValue;
+                  });
+                  _actualizarSubtotal();
+                },
+              ),
+              SizedBox(height: 16),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: anchoController,
+                    decoration: InputDecoration(
+                      labelText: 'Ancho (m)',
+                      prefixIcon: Icon(Icons.straighten),
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    controller: altoController,
+                    decoration: InputDecoration(
+                      labelText: 'Alto (m)',
+                      prefixIcon: Icon(Icons.height),
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: cantidadController,
+              decoration: InputDecoration(
+                labelText: 'Cantidad',
+                prefixIcon: Icon(Icons.numbers),
+              ),
+              keyboardType: TextInputType.number,
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+              ],
+            ),
+            SizedBox(height: 24),
+            Container(
+              padding: EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Color(0xFF1976D2).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Color(0xFF1976D2)),
+              ),
+              child: Text(
+                'Bs ${subtotal.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1976D2),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: Text('Cancelar'),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _guardarCambios,
+                    child: Text('Guardar'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    anchoController.dispose();
+    altoController.dispose();
+    cantidadController.dispose();
+    super.dispose();
   }
 }
