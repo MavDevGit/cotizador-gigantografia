@@ -12,7 +12,7 @@ import 'package:cotizador_app/main.dart';
 void main() {
   testWidgets('La app carga correctamente y muestra el título',
       (WidgetTester tester) async {
-    await tester.pumpWidget(MyApp());
+    await tester.pumpWidget(CotizadorGigantografiaApp());
 
     // Verifica que el título principal esté presente
     expect(find.text('Sistema de Cotizaciones'), findsOneWidget);
