@@ -553,6 +553,7 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.background,
       appBar: _buildAppBar(),
+      drawer: _buildNavigationDrawer(),
       body: AnimatedBuilder(
         animation: _scaleAnimation,
         builder: (context, child) {
@@ -562,12 +563,13 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
           );
         },
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      titleSpacing:
+          0, // Reduce el espacio entre el icono hamburguesa y el título
       title: Row(
         children: [
           Container(
@@ -583,11 +585,11 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Cotizador Gigantografía',
+                'Cotizador',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
-                'Sistema Profesional',
+                'Gigantografía',
                 style: TextStyle(
                     fontSize: 12, color: Colors.white.withOpacity(0.8)),
               ),
@@ -599,75 +601,306 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       foregroundColor: Colors.white,
       elevation: 0,
       actions: [
-        if (_isSupabaseConnected)
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done, color: Colors.green, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  'Conectado',
-                  style: TextStyle(color: Colors.green, fontSize: 12),
-                ),
-              ],
-            ),
-          )
-        else if (SupabaseConfig.isConfigured)
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.orange.withOpacity(0.3)),
-            ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_off, color: Colors.orange, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  'Sin conexión',
-                  style: TextStyle(color: Colors.orange, fontSize: 12),
-                ),
-              ],
-            ),
-          ),
         if (SupabaseConfig.isConfigured)
-          IconButton(
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.sync),
-            onPressed: _isLoading ? null : _sincronizarConSupabase,
-            tooltip: 'Sincronizar con Supabase',
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _isSupabaseConnected
+                  ? Colors.green.withOpacity(0.2)
+                  : Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: _isSupabaseConnected
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.orange.withOpacity(0.3),
+              ),
+            ),
+            child: Icon(
+              _isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
+              color: _isSupabaseConnected ? Colors.green : Colors.orange,
+              size: 20,
+            ),
           ),
-        IconButton(
-          icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-          onPressed: widget.toggleTheme,
-          tooltip: widget.isDarkMode ? 'Modo claro' : 'Modo oscuro',
-        ),
-        IconButton(
-          icon: const Icon(Icons.settings),
-          onPressed: _mostrarGestionTrabajos,
-          tooltip: 'Gestionar tipos de trabajo',
-        ),
         const SizedBox(width: 8),
       ],
+    );
+  }
+
+  Widget _buildNavigationDrawer() {
+    return Drawer(
+      child: Column(
+        children: [
+          // Header del Drawer
+          DrawerHeader(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Theme.of(context).colorScheme.primary,
+                  Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                ],
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.calculate,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Cotizador',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Text(
+                      'Gigantografía',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w300,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Opciones del menú
+          Expanded(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                // Cotización
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.calculate,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  title: const Text('Nueva Cotización'),
+                  subtitle: const Text('Crear cotización'),
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                ),
+
+                const Divider(),
+
+                // Gestión de trabajos
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .secondary
+                          .withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      Icons.work_outline,
+                      color: Theme.of(context).colorScheme.secondary,
+                    ),
+                  ),
+                  title: const Text('Trabajos'),
+                  subtitle: const Text('Gestionar precios'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _mostrarGestionTrabajos();
+                  },
+                ),
+
+                // Historial (placeholder para futuras funcionalidades)
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.history,
+                      color: Colors.purple,
+                    ),
+                  ),
+                  title: const Text('Historial'),
+                  subtitle: const Text('Cotizaciones anteriores'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _mostrarExito('Función próximamente disponible');
+                  },
+                ),
+
+                // Reportes
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.assessment,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  title: const Text('Reportes'),
+                  subtitle: const Text('Estadísticas y reportes'),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _mostrarExito('Función próximamente disponible');
+                  },
+                ),
+
+                const Divider(),
+
+                // Sincronización (si Supabase está configurado)
+                if (SupabaseConfig.isConfigured)
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _isSupabaseConnected
+                            ? Colors.green.withOpacity(0.1)
+                            : Colors.grey.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Icon(
+                              Icons.sync,
+                              color: _isSupabaseConnected
+                                  ? Colors.green
+                                  : Colors.grey,
+                            ),
+                    ),
+                    title: const Text('Sincronizar'),
+                    subtitle: Text(_isSupabaseConnected
+                        ? 'Sincronizar con la nube'
+                        : 'Sin conexión a la nube'),
+                    enabled: !_isLoading && _isSupabaseConnected,
+                    onTap: _isLoading
+                        ? null
+                        : () {
+                            Navigator.pop(context);
+                            _sincronizarConSupabase();
+                          },
+                  ),
+
+                // Configuración del tema
+                ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.yellow.withOpacity(0.1)
+                          : Colors.indigo.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.yellow
+                          : Colors.indigo,
+                    ),
+                  ),
+                  title: Text(widget.isDarkMode ? 'Modo Claro' : 'Modo Oscuro'),
+                  subtitle: const Text('Cambiar apariencia'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    widget.toggleTheme();
+                  },
+                ),
+              ],
+            ),
+          ),
+
+          // Footer del drawer
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context).dividerColor,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Sistema de Cotizaciones v1.0',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.work_outline,
+                      size: 16,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tipos de trabajo: ${tiposDeTrabajos.length}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -686,7 +919,7 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildDesktopLayout() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -706,25 +939,28 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildTabletLayout() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
           _buildFormularioCard(),
           const SizedBox(height: 16),
-          Expanded(child: _buildResumenCard()),
+          _buildResumenCard(),
         ],
       ),
     );
   }
 
   Widget _buildMobileLayout() {
-    return Column(
-      children: [
-        _buildFormularioCard(),
-        const SizedBox(height: 8),
-        Expanded(child: _buildResumenCard()),
-      ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        children: [
+          _buildFormularioCard(),
+          const SizedBox(height: 8),
+          _buildResumenCard(),
+        ],
+      ),
     );
   }
 
@@ -778,7 +1014,7 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
                   ),
             ),
             Text(
-              'Ingrese los datos del trabajo a cotizar',
+              'Ingrese los datos del trabajo',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -793,6 +1029,14 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildTipoDropdown() {
+    // Crear una lista ordenada por ID ascendente
+    final sortedEntries = tiposDeTrabajos.entries.toList()
+      ..sort((a, b) {
+        final idA = a.value.id ?? 0;
+        final idB = b.value.id ?? 0;
+        return idA.compareTo(idB);
+      });
+
     return DropdownButtonFormField<String>(
       value: tipoSeleccionado,
       decoration: InputDecoration(
@@ -800,14 +1044,15 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
         prefixIcon: const Icon(Icons.work_outline),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
-      items: tiposDeTrabajos.keys.map((String value) {
-        final tipo = tiposDeTrabajos[value]!;
+      items: sortedEntries.map((entry) {
+        final nombre = entry.key;
+        final tipo = entry.value;
         return DropdownMenuItem<String>(
-          value: value,
+          value: nombre,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Flexible(child: Text(value)),
+              Flexible(child: Text(nombre)),
               const SizedBox(width: 8),
               Text(
                 'Bs ${tipo.costo.toStringAsFixed(2)}/m²',
@@ -974,6 +1219,8 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       icon: const Icon(Icons.add_circle_outline),
       label: const Text('AÑADIR TRABAJO'),
       style: ElevatedButton.styleFrom(
+        backgroundColor: subtotal > 0 ? Colors.blue : null,
+        foregroundColor: subtotal > 0 ? Colors.white : null,
         padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: subtotal > 0 ? 4 : 0,
@@ -982,13 +1229,16 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildResumenCard() {
-    return Card(
-      child: Column(
-        children: [
-          _buildResumenHeader(),
-          Expanded(child: _buildResumenBody()),
-          if (itemsCotizacion.isNotEmpty) _buildTotalFooter(),
-        ],
+    return SizedBox(
+      height: 600, // Altura fija para el resumen
+      child: Card(
+        child: Column(
+          children: [
+            _buildResumenHeader(),
+            Expanded(child: _buildResumenBody()),
+            if (itemsCotizacion.isNotEmpty) _buildTotalFooter(),
+          ],
+        ),
       ),
     );
   }
@@ -1237,18 +1487,6 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    if (itemsCotizacion.isEmpty) return const SizedBox.shrink();
-
-    return FloatingActionButton.extended(
-      onPressed: _exportarCotizacion,
-      icon: const Icon(Icons.share),
-      label: const Text('Exportar'),
-      backgroundColor: Theme.of(context).colorScheme.secondary,
-      foregroundColor: Colors.white,
-    );
-  }
-
   void _limpiarTodaLaCotizacion() {
     showDialog(
       context: context,
@@ -1276,11 +1514,6 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
         ],
       ),
     );
-  }
-
-  void _exportarCotizacion() {
-    // Aquí puedes implementar la lógica de exportación
-    _mostrarExito('Función de exportación próximamente');
   }
 
   @override
@@ -1433,12 +1666,40 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
                 border:
                     OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              items: widget.tiposDeTrabajos.keys.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
+              items: () {
+                // Crear una lista ordenada por ID ascendente
+                final sortedEntries = widget.tiposDeTrabajos.entries.toList()
+                  ..sort((a, b) {
+                    final idA = a.value.id ?? 0;
+                    final idB = b.value.id ?? 0;
+                    return idA.compareTo(idB);
+                  });
+
+                return sortedEntries.map((entry) {
+                  final nombre = entry.key;
+                  final tipo = entry.value;
+                  return DropdownMenuItem<String>(
+                    value: nombre,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(child: Text(nombre)),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Bs ${tipo.costo.toStringAsFixed(2)}/m²',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList();
+              }(),
               onChanged: (String? newValue) {
                 setState(() {
                   tipoSeleccionado = newValue;
@@ -1600,6 +1861,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
   String? tipoSeleccionado;
   bool _isLoading = false;
   bool _hasChanges = false;
+  bool _isExpanded = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
@@ -1642,6 +1904,8 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
+      titleSpacing:
+          0, // Reduce el espacio entre el icono hamburguesa y el título
       title: Row(
         children: [
           Container(
@@ -1657,7 +1921,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Gestión de Trabajos',
+                'Trabajos',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               Text(
@@ -1673,28 +1937,27 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       foregroundColor: Colors.white,
       elevation: 0,
       actions: [
-        if (widget.isSupabaseConnected)
+        if (SupabaseConfig.isConfigured) ...[
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.green.withOpacity(0.3)),
+              color: widget.isSupabaseConnected
+                  ? Colors.green.withOpacity(0.2)
+                  : Colors.orange.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: widget.isSupabaseConnected
+                    ? Colors.green.withOpacity(0.3)
+                    : Colors.orange.withOpacity(0.3),
+              ),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.cloud_done, color: Colors.green, size: 16),
-                SizedBox(width: 4),
-                Text(
-                  'Sincronizado',
-                  style: TextStyle(color: Colors.green, fontSize: 12),
-                ),
-              ],
+            child: Icon(
+              widget.isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
+              color: widget.isSupabaseConnected ? Colors.green : Colors.orange,
+              size: 20,
             ),
           ),
-        if (SupabaseConfig.isConfigured)
           IconButton(
             icon: _isLoading
                 ? const SizedBox(
@@ -1709,11 +1972,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
             onPressed: _isLoading ? null : _sincronizarConSupabase,
             tooltip: 'Sincronizar con Supabase',
           ),
-        IconButton(
-          icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
-          onPressed: widget.toggleTheme,
-          tooltip: widget.isDarkMode ? 'Modo claro' : 'Modo oscuro',
-        ),
+        ],
         const SizedBox(width: 8),
       ],
     );
@@ -1801,11 +2060,20 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       children: [
         // Formulario colapsible en móvil
         ExpansionTile(
+          key: ValueKey(
+              'expansion_tile_${tipoSeleccionado ?? 'new'}_$_isExpanded'),
           title: const Text('Añadir/Editar Trabajo'),
           subtitle: Text(tipoSeleccionado != null
               ? 'Editando: $tipoSeleccionado'
               : 'Tap para añadir nuevo trabajo'),
           leading: const Icon(Icons.add_business),
+          initiallyExpanded: _isExpanded,
+          onExpansionChanged: (expanded) {
+            setState(() {
+              _isExpanded = expanded;
+            });
+            print('🎯 ExpansionTile cambió a: $expanded');
+          },
           children: [
             Padding(
               padding: const EdgeInsets.all(16),
@@ -1878,43 +2146,67 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
         const SizedBox(height: 20),
 
         // Botones de acción
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: tipoSeleccionado != null
-                    ? _actualizarTrabajo
-                    : _anadirTrabajo,
-                icon: Icon(tipoSeleccionado != null ? Icons.update : Icons.add),
-                label: Text(tipoSeleccionado != null ? 'Actualizar' : 'Añadir'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+        if (tipoSeleccionado != null) ...[
+          // Modo edición: mostrar Actualizar, Eliminar y Cancelar
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _actualizarTrabajo,
+                  icon: const Icon(Icons.update),
+                  label: const Text('Actualizar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
-            ),
-            if (tipoSeleccionado != null) ...[
               const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: _eliminarTrabajo,
-                icon: const Icon(Icons.delete),
-                label: const Text('Eliminar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _eliminarTrabajo,
+                  icon: const Icon(Icons.delete),
+                  label: const Text('Eliminar'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _limpiarFormulario,
+                  icon: const Icon(Icons.clear),
+                  label: const Text('Cancelar'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
             ],
-            const SizedBox(width: 12),
-            OutlinedButton.icon(
-              onPressed: _limpiarFormulario,
-              icon: const Icon(Icons.clear),
-              label: const Text('Cancelar'),
-            ),
-          ],
-        ),
+          ),
+        ] else ...[
+          // Modo creación: mostrar solo Añadir
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _anadirTrabajo,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Añadir'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ],
     );
   }
@@ -2218,7 +2510,11 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       tipoSeleccionado = nombre;
       nombreController.text = nombre;
       costoController.text = trabajo.costo.toString();
+      // Expandir automáticamente el formulario en móvil al seleccionar un trabajo
+      _isExpanded = true;
     });
+    // Debug: Verificar que la expansión se está activando
+    print('🔧 Trabajo seleccionado: $nombre, Expandido: $_isExpanded');
   }
 
   void _limpiarFormulario() {
@@ -2226,7 +2522,9 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       tipoSeleccionado = null;
       nombreController.clear();
       costoController.clear();
+      _isExpanded = false; // Asegurar que se contraiga al limpiar
     });
+    print('🧹 Formulario limpiado, Expandido: $_isExpanded');
   }
 
   void _anadirTrabajo() {
