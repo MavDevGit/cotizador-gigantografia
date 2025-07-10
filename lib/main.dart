@@ -244,6 +244,9 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   final TextEditingController adicionalController =
       TextEditingController(text: '0');
 
+  // FocusNode para el selector de trabajos
+  final FocusNode _tipoTrabajoFocusNode = FocusNode();
+
   String? tipoSeleccionado;
   double subtotal = 0.0;
 
@@ -283,6 +286,17 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     altoController.addListener(_actualizarSubtotal);
     cantidadController.addListener(_actualizarSubtotal);
     adicionalController.addListener(_actualizarSubtotal);
+  }
+
+  // Método para enfocar el selector de trabajos
+  void _enfocarSelectorTrabajos() {
+    if (mounted && tiposDeTrabajos.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _tipoTrabajoFocusNode.requestFocus();
+        }
+      });
+    }
   }
 
   Future<void> _verificarConexionSupabase() async {
@@ -397,6 +411,9 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
       _mostrarExito('Datos sincronizados exitosamente');
       print('✅ Sincronización completada');
+
+      // Enfocar el selector después de sincronizar
+      _enfocarSelectorTrabajos();
     } catch (e) {
       print('❌ Error al sincronizar: $e');
       _mostrarError('Error al sincronizar: $e');
@@ -438,6 +455,9 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
       // Verificar cambios remotos después de cargar datos locales
       await _verificarCambiosRemotos();
+
+      // Enfocar el selector de trabajos después de cargar los datos
+      _enfocarSelectorTrabajos();
     } catch (e) {
       print('Error al cargar datos: $e');
       await _cargarDatosLocales();
@@ -462,6 +482,8 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       setState(() {
         tipoSeleccionado = tiposDeTrabajos.keys.first;
       });
+      // Enfocar el selector de trabajos después de cargar los datos locales
+      _enfocarSelectorTrabajos();
     }
   }
 
@@ -525,6 +547,9 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
       _limpiarCampos();
       _mostrarExito('Trabajo añadido exitosamente');
+
+      // Regresar el foco al selector de trabajos después de añadir
+      _enfocarSelectorTrabajos();
     } catch (e) {
       _mostrarError('Error al añadir el trabajo');
     }
@@ -600,7 +625,8 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   void _mostrarGestionTrabajos() {
-    Navigator.of(context).push(
+    Navigator.of(context)
+        .push(
       MaterialPageRoute(
         builder: (context) => GestionTrabajosPage(
           tiposDeTrabajos: tiposDeTrabajos,
@@ -615,10 +641,16 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
             });
             await _guardarDatos();
             _actualizarSubtotal();
+            // Enfocar el selector después de guardar cambios
+            _enfocarSelectorTrabajos();
           },
         ),
       ),
-    );
+    )
+        .then((_) {
+      // Enfocar el selector al regresar de la gestión de trabajos
+      _enfocarSelectorTrabajos();
+    });
   }
 
   double get total =>
@@ -1197,40 +1229,65 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
           tiposDeTrabajos.isNotEmpty ? tiposDeTrabajos.keys.first : null;
     }
 
-    return DropdownButtonFormField<String>(
-      value: tipoSeleccionado,
-      decoration: InputDecoration(
-        labelText: 'Tipo de Trabajo',
-        prefixIcon: const Icon(Icons.work_outline),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      items: sortedEntries.map((entry) {
-        final nombre = entry.key;
-        final tipo = entry.value;
-        return DropdownMenuItem<String>(
-          value: nombre,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Flexible(child: Text(nombre)),
-              const SizedBox(width: 8),
-              Text(
-                'Bs ${tipo.costo.toStringAsFixed(2)}/m²',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w500,
-                    ),
+    return Focus(
+      focusNode: _tipoTrabajoFocusNode,
+      child: Builder(
+        builder: (context) {
+          final bool hasFocus = Focus.of(context).hasFocus;
+          return DropdownButtonFormField<String>(
+            value: tipoSeleccionado,
+            decoration: InputDecoration(
+              labelText: 'Tipo de Trabajo',
+              prefixIcon: const Icon(Icons.work_outline),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 2,
+                ),
               ),
-            ],
-          ),
-        );
-      }).toList(),
-      onChanged: (String? newValue) {
-        setState(() {
-          tipoSeleccionado = newValue;
-        });
-        _actualizarSubtotal();
-      },
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: hasFocus
+                      ? Theme.of(context).colorScheme.primary
+                      : Colors.grey.shade400,
+                  width: hasFocus ? 2 : 1,
+                ),
+              ),
+            ),
+            items: sortedEntries.map((entry) {
+              final nombre = entry.key;
+              final tipo = entry.value;
+              return DropdownMenuItem<String>(
+                value: nombre,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(child: Text(nombre)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Bs ${tipo.costo.toStringAsFixed(2)}/m²',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                tipoSeleccionado = newValue;
+              });
+              _actualizarSubtotal();
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -2027,6 +2084,7 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     altoController.dispose();
     cantidadController.dispose();
     adicionalController.dispose();
+    _tipoTrabajoFocusNode.dispose();
     _animationController.dispose();
     _syncAnimationController.dispose();
     _syncCheckTimer?.cancel(); // Cancelar timer de verificación
