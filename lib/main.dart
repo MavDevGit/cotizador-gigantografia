@@ -1662,24 +1662,69 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
                 width: 1,
               ),
             ),
-            child: const Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.lightbulb_outline,
-                  size: 16,
-                  color: Color(0xFF0AE98A),
-                ),
-                SizedBox(width: 6),
-                Text(
-                  'Tip: Selecciona el tipo de trabajo y llena las dimensiones',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF0AE98A),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Verificar el ancho disponible de la pantalla
+                final screenWidth = MediaQuery.of(context).size.width;
+                final isMobile = screenWidth < 600;
+
+                if (isMobile) {
+                  // Layout para dispositivos móviles (columna)
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.lightbulb_outline,
+                            size: 16,
+                            color: Color(0xFF0AE98A),
+                          ),
+                          const SizedBox(width: 6),
+                          const Text(
+                            'Tip: Selecciona el tipo de trabajo',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF0AE98A),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Text(
+                        'y llena las dimensiones',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF0AE98A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  );
+                } else {
+                  // Layout para pantallas más grandes (fila)
+                  return const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.lightbulb_outline,
+                        size: 16,
+                        color: Color(0xFF0AE98A),
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Tip: Selecciona el tipo de trabajo y llena las dimensiones',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF0AE98A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  );
+                }
+              },
             ),
           ),
         ],
