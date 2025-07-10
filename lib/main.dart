@@ -35,31 +35,9 @@ class CotizadorGigantografiaApp extends StatefulWidget {
 }
 
 class _CotizadorGigantografiaAppState extends State<CotizadorGigantografiaApp> {
-  bool isDarkMode = false;
-
   @override
   void initState() {
     super.initState();
-    _loadThemePreference();
-  }
-
-  Future<void> _loadThemePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      isDarkMode = prefs.getBool('isDarkMode') ?? false;
-    });
-  }
-
-  Future<void> _saveThemePreference() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', isDarkMode);
-  }
-
-  void _toggleTheme() {
-    setState(() {
-      isDarkMode = !isDarkMode;
-    });
-    _saveThemePreference();
   }
 
   @override
@@ -67,106 +45,121 @@ class _CotizadorGigantografiaAppState extends State<CotizadorGigantografiaApp> {
     return MaterialApp(
       title: 'Sistema de Cotizaciones Gigantografía',
       debugShowCheckedModeBanner: false,
-      theme: _buildLightTheme(),
-      darkTheme: _buildDarkTheme(),
-      themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home:
-          CotizadorHomePage(toggleTheme: _toggleTheme, isDarkMode: isDarkMode),
+      theme: _buildElegantTheme(),
+      home: const CotizadorHomePage(),
     );
   }
 
-  ThemeData _buildLightTheme() {
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF1565C0),
-        brightness: Brightness.light,
-        primary: const Color(0xFF1565C0),
-        secondary: const Color(0xFF0D47A1),
-        surface: Colors.white,
-        background: const Color(0xFFF8F9FA),
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: const Color(0xFF1A1A1A),
-        onBackground: const Color(0xFF1A1A1A),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-      cardTheme: const CardThemeData(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(12))),
-        margin: EdgeInsets.all(8),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      ),
-      appBarTheme: const AppBarTheme(
-        elevation: 0,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-
-  ThemeData _buildDarkTheme() {
+  ThemeData _buildElegantTheme() {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF1565C0),
+        seedColor: const Color(0xFF0AE98A),
         brightness: Brightness.dark,
-        primary: const Color(0xFF42A5F5),
-        secondary: const Color(0xFF1976D2),
-        surface: const Color(0xFF1E1E1E),
-        background: const Color(0xFF121212),
-        onPrimary: Colors.white,
-        onSecondary: Colors.white,
-        onSurface: Colors.white,
-        onBackground: Colors.white,
+        primary: const Color(0xFF0AE98A), // Verde Platzi como primario
+        secondary: const Color(0xFF13161c), // Fondo principal oscuro
+        tertiary: const Color(0xFF1e2229), // Superficies secundarias
+        surface: const Color(0xFF1e2229), // Cards y superficies
+        background: const Color(0xFF13161c), // Fondo principal
+        onPrimary: const Color(0xFF13161c), // Texto sobre verde
+        onSecondary: const Color(0xFF0AE98A), // Verde sobre oscuro
+        onSurface: const Color(0xFFFFFFFF), // Texto blanco en superficies
+        onBackground: const Color(0xFFFFFFFF), // Texto blanco en fondo
+        surfaceVariant: const Color(0xFF252930), // Variante de superficie
+        onSurfaceVariant: const Color(0xFFB0B3B8), // Texto gris claro
+        error: const Color(0xFFFF5252),
+        onError: Colors.white,
+        outline: const Color(0xFF0AE98A), // Bordes en verde
       ),
+      // Botones elevados con estilo Platzi
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+          elevation: 0,
+          backgroundColor: const Color(0xFF0AE98A),
+          foregroundColor: const Color(0xFF13161c),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         ),
       ),
+      // Cards con estilo Platzi
       cardTheme: const CardThemeData(
-        elevation: 4,
+        elevation: 0,
+        color: Color(0xFF1e2229),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(12))),
-        margin: EdgeInsets.all(8),
+        margin: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       ),
+      // Inputs con estilo Platzi
       inputDecorationTheme: InputDecorationTheme(
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF353A42), width: 1),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF353A42), width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF0AE98A), width: 2),
         ),
         contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        fillColor: const Color(0xFF252930),
+        filled: true,
+        labelStyle: const TextStyle(color: Color(0xFFB0B3B8)),
+        hintStyle: const TextStyle(color: Color(0xFF6B7280)),
       ),
+      // AppBar estilo Platzi
       appBarTheme: const AppBarTheme(
         elevation: 0,
         centerTitle: false,
+        backgroundColor: Color(0xFF13161c), // Fondo oscuro principal
+        foregroundColor: Color(0xFFFFFFFF), // Texto blanco
         titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: Colors.white,
+          fontSize: 24,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFFFFFFF),
         ),
+        surfaceTintColor: Colors.transparent,
+      ),
+      // Drawer estilo Platzi
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: Color(0xFF1e2229),
+        surfaceTintColor: Colors.transparent,
+      ),
+      // SnackBar estilo Platzi
+      snackBarTheme: SnackBarThemeData(
+        backgroundColor: const Color(0xFF0AE98A),
+        contentTextStyle: const TextStyle(
+            color: Color(0xFF13161c), fontWeight: FontWeight.w500),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        behavior: SnackBarBehavior.floating,
+      ),
+      // Text theme con colores Platzi
+      textTheme: const TextTheme(
+        headlineLarge:
+            TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w700),
+        headlineMedium:
+            TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w600),
+        headlineSmall:
+            TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w600),
+        titleLarge:
+            TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w600),
+        titleMedium:
+            TextStyle(color: Color(0xFFFFFFFF), fontWeight: FontWeight.w500),
+        titleSmall:
+            TextStyle(color: Color(0xFFB0B3B8), fontWeight: FontWeight.w500),
+        bodyLarge: TextStyle(color: Color(0xFFFFFFFF)),
+        bodyMedium: TextStyle(color: Color(0xFFB0B3B8)),
+        bodySmall: TextStyle(color: Color(0xFF6B7280)),
+      ),
+      // Divider estilo Platzi
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFF353A42),
+        thickness: 1,
       ),
     );
   }
@@ -219,13 +212,8 @@ class ItemCotizacion {
 
 // Página principal renovada con diseño profesional
 class CotizadorHomePage extends StatefulWidget {
-  final VoidCallback toggleTheme;
-  final bool isDarkMode;
-
   const CotizadorHomePage({
     Key? key,
-    required this.toggleTheme,
-    required this.isDarkMode,
   }) : super(key: key);
 
   @override
@@ -526,8 +514,6 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       MaterialPageRoute(
         builder: (context) => GestionTrabajosPage(
           tiposDeTrabajos: tiposDeTrabajos,
-          toggleTheme: widget.toggleTheme,
-          isDarkMode: widget.isDarkMode,
           isSupabaseConnected: _isSupabaseConnected,
           onSave: (nuevosTipos) async {
             setState(() {
@@ -568,37 +554,42 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      titleSpacing:
-          0, // Reduce el espacio entre el icono hamburguesa y el título
+      titleSpacing: 0,
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: const Color(0xFF0AE98A),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.calculate, color: Colors.white),
+            child:
+                const Icon(Icons.calculate, color: Color(0xFF13161c), size: 24),
           ),
-          const SizedBox(width: 12),
-          Column(
+          const SizedBox(width: 16),
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Cotizador',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFFFFFFF)),
               ),
               Text(
                 'Gigantografía',
                 style: TextStyle(
-                    fontSize: 12, color: Colors.white.withOpacity(0.8)),
+                    fontSize: 14,
+                    color: Color(0xFF0AE98A),
+                    fontWeight: FontWeight.w500),
               ),
             ],
           ),
         ],
       ),
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFF13161c),
+      foregroundColor: const Color(0xFFFFFFFF),
       elevation: 0,
       actions: [
         if (SupabaseConfig.isConfigured)
@@ -607,19 +598,22 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: _isSupabaseConnected
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.orange.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+                  ? const Color(0xFF0AE98A).withOpacity(0.1)
+                  : const Color(0xFF252930),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: _isSupabaseConnected
-                    ? Colors.green.withOpacity(0.3)
-                    : Colors.orange.withOpacity(0.3),
+                    ? const Color(0xFF0AE98A)
+                    : const Color(0xFF353A42),
+                width: 1,
               ),
             ),
             child: Icon(
               _isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
-              color: _isSupabaseConnected ? Colors.green : Colors.orange,
-              size: 20,
+              color: _isSupabaseConnected
+                  ? const Color(0xFF0AE98A)
+                  : const Color(0xFF6B7280),
+              size: 18,
             ),
           ),
         const SizedBox(width: 8),
@@ -633,49 +627,42 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
         children: [
           // Header del Drawer
           DrawerHeader(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                ],
-              ),
+            decoration: const BoxDecoration(
+              color: Color(0xFF13161c), // Fondo oscuro como Platzi
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
+                    color: const Color(0xFF0AE98A),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.calculate,
-                    color: Colors.white,
-                    size: 24,
+                    color: Color(0xFF13161c),
+                    size: 28,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Column(
+                const SizedBox(width: 16),
+                const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
+                    Text(
                       'Cotizador',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: Color(0xFFFFFFFF),
                         fontSize: 24,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Gigantografía',
                       style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w300,
+                        color: Color(0xFF0AE98A),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
@@ -821,31 +808,6 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
                             _sincronizarConSupabase();
                           },
                   ),
-
-                // Configuración del tema
-                ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.yellow.withOpacity(0.1)
-                          : Colors.indigo.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.yellow
-                          : Colors.indigo,
-                    ),
-                  ),
-                  title: Text(widget.isDarkMode ? 'Modo Claro' : 'Modo Oscuro'),
-                  subtitle: const Text('Cambiar apariencia'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    widget.toggleTheme();
-                  },
-                ),
               ],
             ),
           ),
@@ -989,42 +951,79 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildFormularioHeader() {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            Icons.add_box,
-            color: Theme.of(context).colorScheme.primary,
-            size: 28,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1e2229),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF353A42),
+          width: 1,
         ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Nuevo Trabajo',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+              ),
+              borderRadius: BorderRadius.circular(12),
             ),
-            Text(
-              'Ingrese los datos del trabajo',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.7),
-                  ),
+            child: const Icon(
+              Icons.add_business,
+              color: Color(0xFF13161c),
+              size: 24,
             ),
-          ],
-        ),
-      ],
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Nuevo Trabajo',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFFFFFFF),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Ingrese los datos del trabajo para calcular el costo',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFFB0B3B8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0AE98A).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${tiposDeTrabajos.length} tipos disponibles',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF0AE98A),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -1149,56 +1148,97 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
   Widget _buildSubtotalCard() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Theme.of(context).colorScheme.primaryContainer,
-            Theme.of(context).colorScheme.primaryContainer.withOpacity(0.7),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        color: const Color(0xFF1e2229), // Superficie oscura estilo Platzi
+        borderRadius: BorderRadius.circular(12),
+        border: subtotal > 0
+            ? Border.all(
+                color: const Color(0xFF0AE98A).withOpacity(0.3), width: 1)
+            : Border.all(color: const Color(0xFF353A42), width: 1),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: subtotal > 0
+                      ? const Color(0xFF0AE98A).withOpacity(0.1)
+                      : const Color(0xFF353A42).withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.calculate,
+                  color: subtotal > 0
+                      ? const Color(0xFF0AE98A)
+                      : const Color(0xFF6B7280),
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
               Text(
                 'SUBTOTAL',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-              ),
-              if (subtotal > 0) ...[
-                const SizedBox(height: 4),
-                Text(
-                  _getMetrosCuadradosText(),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onPrimaryContainer
-                            .withOpacity(0.8),
-                      ),
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: subtotal > 0
+                      ? const Color(0xFF0AE98A)
+                      : const Color(0xFF6B7280),
+                  letterSpacing: 0.5,
                 ),
-              ],
+              ),
             ],
           ),
-          Text(
-            'Bs ${subtotal.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (subtotal > 0) ...[
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getMetrosCuadradosText(),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFFB0B3B8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      tipoSeleccionado ?? '',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
                 ),
+              ] else ...[
+                const Text(
+                  'Vacio',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+              Text(
+                'Bs ${subtotal.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: subtotal > 0 ? 28 : 24,
+                  fontWeight: FontWeight.w700,
+                  color: subtotal > 0
+                      ? const Color(0xFFFFFFFF)
+                      : const Color(0xFF6B7280),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1214,16 +1254,49 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildAddButton() {
-    return ElevatedButton.icon(
-      onPressed: subtotal > 0 ? _anadirItem : null,
-      icon: const Icon(Icons.add_circle_outline),
-      label: const Text('AÑADIR TRABAJO'),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: subtotal > 0 ? Colors.blue : null,
-        foregroundColor: subtotal > 0 ? Colors.white : null,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: subtotal > 0 ? 4 : 0,
+    final isEnabled = subtotal > 0;
+
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: isEnabled
+            ? const LinearGradient(
+                colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+              )
+            : null,
+        color: isEnabled ? null : const Color(0xFF252930),
+        border: isEnabled
+            ? null
+            : Border.all(color: const Color(0xFF353A42), width: 1),
+      ),
+      child: ElevatedButton.icon(
+        onPressed: isEnabled ? _anadirItem : null,
+        icon: Icon(
+          Icons.add_circle_outline,
+          size: 20,
+          color: isEnabled ? const Color(0xFF13161c) : const Color(0xFF6B7280),
+        ),
+        label: Text(
+          'AÑADIR TRABAJO',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+            color:
+                isEnabled ? const Color(0xFF13161c) : const Color(0xFF6B7280),
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          elevation: 0,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: EdgeInsets.zero,
+        ),
       ),
     );
   }
@@ -1245,10 +1318,10 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
   Widget _buildResumenHeader() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
-        borderRadius: const BorderRadius.only(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1e2229), // Superficie estilo Platzi
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
         ),
@@ -1256,50 +1329,114 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFF0AE98A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: const Color(0xFF0AE98A).withOpacity(0.3), width: 1),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.receipt_long,
-              color: Theme.of(context).colorScheme.primary,
+              color: Color(0xFF0AE98A),
+              size: 22,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Cotización',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFFFFFFF),
+                  ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   itemsCotizacion.isEmpty
                       ? 'No hay trabajos añadidos'
-                      : '${itemsCotizacion.length} trabajo${itemsCotizacion.length > 1 ? 's' : ''}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurfaceVariant
-                            .withOpacity(0.7),
-                      ),
+                      : '${itemsCotizacion.length} trabajo${itemsCotizacion.length > 1 ? 's' : ''} • ${_getTotalMetrosCuadrados().toStringAsFixed(2)} m²',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFFB0B3B8),
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-          if (itemsCotizacion.isNotEmpty)
-            IconButton(
-              onPressed: _limpiarTodaLaCotizacion,
-              icon: const Icon(Icons.clear_all),
-              tooltip: 'Limpiar todo',
+          if (itemsCotizacion.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0AE98A).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                    color: const Color(0xFF0AE98A).withOpacity(0.3), width: 1),
+              ),
+              child: Text(
+                'Bs ${total.toStringAsFixed(0)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF0AE98A),
+                ),
+              ),
             ),
+            const SizedBox(width: 12),
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF252930),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF353A42),
+                  width: 1,
+                ),
+              ),
+              child: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert,
+                    color: Color(0xFFB0B3B8), size: 20),
+                tooltip: 'Más opciones',
+                color: const Color(0xFF252930),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                onSelected: (value) {
+                  if (value == 'clear_all') {
+                    _limpiarTodaLaCotizacion();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'clear_all',
+                    child: Row(
+                      children: [
+                        Icon(Icons.clear_all, color: Colors.red, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Limpiar cotización',
+                          style: TextStyle(color: Color(0xFFFFFFFF)),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  // Método helper para calcular el total de metros cuadrados
+  double _getTotalMetrosCuadrados() {
+    return itemsCotizacion.fold(0.0, (sum, item) => sum + item.metrosCuadrados);
   }
 
   Widget _buildResumenBody() {
@@ -1320,34 +1457,69 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+              color: const Color(0xFF1e2229),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF353A42),
+                width: 2,
+              ),
             ),
-            child: Icon(
-              Icons.receipt_long,
-              size: 64,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withOpacity(0.5),
+            child: const Icon(
+              Icons.description_outlined,
+              size: 48,
+              color: Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'No hay trabajos añadidos',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFFFFFFF),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Completa el formulario y añade tu primer trabajo',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
+          const Text(
+            'Completa el formulario y añade tu primer trabajo\npara comenzar con la cotización',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFFB0B3B8),
+            ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0AE98A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF0AE98A).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  size: 16,
+                  color: Color(0xFF0AE98A),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Tip: Selecciona el tipo de trabajo y llena las dimensiones',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF0AE98A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1356,100 +1528,176 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
 
   Widget _buildItemCard(int index) {
     final item = itemsCotizacion[index];
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.work_outline,
-                color: Theme.of(context).colorScheme.primary,
-                size: 20,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.tipo,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${item.cantidad.toStringAsFixed(0)} × ${item.ancho}m × ${item.alto}m = ${item.metrosCuadrados.toStringAsFixed(2)} m²',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  if (item.adicional > 0) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      'Adicional: Bs ${item.adicional.toStringAsFixed(2)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.w500,
-                          ),
-                    ),
-                  ],
-                ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1e2229),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF353A42),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0AE98A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: const Color(0xFF0AE98A).withOpacity(0.3),
+                width: 1,
               ),
             ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
+            child: const Icon(
+              Icons.work_outline,
+              color: Color(0xFF0AE98A),
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Bs ${item.costo.toStringAsFixed(2)}',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
+                  item.tipo,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFFFFFFF),
+                  ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
+                Text(
+                  '${item.cantidad.toStringAsFixed(0)} × ${item.ancho}m × ${item.alto}m',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFFB0B3B8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 2),
                 Row(
-                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      onPressed: () => _editarItem(index),
-                      icon: const Icon(Icons.edit_outlined),
-                      iconSize: 20,
-                      tooltip: 'Editar',
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0AE98A).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${item.metrosCuadrados.toStringAsFixed(2)} m²',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF0AE98A),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
-                    IconButton(
-                      onPressed: () => _eliminarItem(index),
-                      icon: const Icon(Icons.delete_outline),
-                      iconSize: 20,
-                      tooltip: 'Eliminar',
-                    ),
+                    if (item.adicional > 0) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '+Bs ${item.adicional.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.orange,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                'Bs ${item.costo.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0AE98A),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF252930),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF353A42),
+                        width: 1,
+                      ),
+                    ),
+                    child: IconButton(
+                      onPressed: () => _editarItem(index),
+                      icon: const Icon(Icons.edit_outlined),
+                      iconSize: 18,
+                      color: const Color(0xFFB0B3B8),
+                      tooltip: 'Editar',
+                      padding: const EdgeInsets.all(8),
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF252930),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF353A42),
+                        width: 1,
+                      ),
+                    ),
+                    child: IconButton(
+                      onPressed: () => _eliminarItem(index),
+                      icon: const Icon(Icons.delete_outline),
+                      iconSize: 18,
+                      color: Colors.red.withOpacity(0.8),
+                      tooltip: 'Eliminar',
+                      padding: const EdgeInsets.all(8),
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildTotalFooter() {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      padding: const EdgeInsets.all(24),
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
+            Color(0xFF0AE98A),
+            Color(0xFF0AE98A),
           ],
         ),
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(12),
           bottomRight: Radius.circular(12),
         ),
@@ -1460,27 +1708,57 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'TOTAL GENERAL',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF13161c).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
+                    child: const Icon(
+                      Icons.attach_money,
+                      color: Color(0xFF13161c),
+                      size: 16,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'TOTAL GENERAL',
+                    style: TextStyle(
+                      color: Color(0xFF13161c),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
+              const SizedBox(height: 4),
               Text(
-                'Cotización completa',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white.withOpacity(0.8),
-                    ),
+                '${itemsCotizacion.length} trabajo${itemsCotizacion.length > 1 ? 's' : ''} • ${_getTotalMetrosCuadrados().toStringAsFixed(2)} m²',
+                style: TextStyle(
+                  color: const Color(0xFF13161c).withOpacity(0.7),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
-          Text(
-            'Bs ${total.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF13161c).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              'Bs ${total.toStringAsFixed(2)}',
+              style: const TextStyle(
+                color: Color(0xFF13161c),
+                fontWeight: FontWeight.w700,
+                fontSize: 24,
+              ),
+            ),
           ),
         ],
       ),
@@ -1491,14 +1769,29 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar'),
+        backgroundColor: const Color(0xFF1e2229),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF353A42)),
+        ),
+        title: const Text(
+          'Limpiar Cotización',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         content: const Text(
-            '¿Estás seguro de que deseas limpiar toda la cotización?'),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          '¿Estás seguro de que deseas limpiar toda la cotización?\n\nSe eliminarán todos los trabajos añadidos.',
+          style: TextStyle(color: Color(0xFFB0B3B8)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Color(0xFFB0B3B8)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1506,10 +1799,16 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
               setState(() {
                 itemsCotizacion.clear();
               });
-              _mostrarExito('Cotización limpiada');
+              _mostrarExito('Cotización limpiada exitosamente');
             },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Limpiar', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Limpiar Todo'),
           ),
         ],
       ),
@@ -1834,16 +2133,12 @@ class _EditarItemDialogState extends State<EditarItemDialog> {
 class GestionTrabajosPage extends StatefulWidget {
   final Map<String, TipoTrabajo> tiposDeTrabajos;
   final Function(Map<String, TipoTrabajo>) onSave;
-  final VoidCallback toggleTheme;
-  final bool isDarkMode;
   final bool isSupabaseConnected;
 
   const GestionTrabajosPage({
     Key? key,
     required this.tiposDeTrabajos,
     required this.onSave,
-    required this.toggleTheme,
-    required this.isDarkMode,
     required this.isSupabaseConnected,
   }) : super(key: key);
 
@@ -1904,73 +2199,104 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      titleSpacing:
-          0, // Reduce el espacio entre el icono hamburguesa y el título
+      titleSpacing: 0,
       title: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: const Color(0xFF0AE98A),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.settings, color: Colors.white),
+            child: const Icon(
+              Icons.settings,
+              color: Color(0xFF13161c),
+              size: 24,
+            ),
           ),
-          const SizedBox(width: 12),
-          Column(
+          const SizedBox(width: 16),
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Trabajos',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              Text(
+                'Gestión de Trabajos',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFFFFFFF),
+                ),
               ),
               Text(
                 'Configurar tipos y precios',
                 style: TextStyle(
-                    fontSize: 12, color: Colors.white.withOpacity(0.8)),
+                  fontSize: 14,
+                  color: Color(0xFF0AE98A),
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ],
           ),
         ],
       ),
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      foregroundColor: Colors.white,
+      backgroundColor: const Color(0xFF13161c),
+      foregroundColor: const Color(0xFFFFFFFF),
       elevation: 0,
       actions: [
         if (SupabaseConfig.isConfigured) ...[
           Container(
-            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: widget.isSupabaseConnected
-                  ? Colors.green.withOpacity(0.2)
-                  : Colors.orange.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
+                  ? const Color(0xFF0AE98A).withOpacity(0.1)
+                  : const Color(0xFF252930),
+              borderRadius: BorderRadius.circular(6),
               border: Border.all(
                 color: widget.isSupabaseConnected
-                    ? Colors.green.withOpacity(0.3)
-                    : Colors.orange.withOpacity(0.3),
+                    ? const Color(0xFF0AE98A)
+                    : const Color(0xFF353A42),
+                width: 1,
               ),
             ),
             child: Icon(
               widget.isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
-              color: widget.isSupabaseConnected ? Colors.green : Colors.orange,
-              size: 20,
+              color: widget.isSupabaseConnected
+                  ? const Color(0xFF0AE98A)
+                  : const Color(0xFF6B7280),
+              size: 18,
             ),
           ),
-          IconButton(
-            icon: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF252930),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: const Color(0xFF353A42),
+                width: 1,
+              ),
+            ),
+            child: IconButton(
+              icon: _isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFF0AE98A)),
+                      ),
+                    )
+                  : const Icon(
+                      Icons.sync,
+                      color: Color(0xFFB0B3B8),
+                      size: 18,
                     ),
-                  )
-                : const Icon(Icons.sync),
-            onPressed: _isLoading ? null : _sincronizarConSupabase,
-            tooltip: 'Sincronizar con Supabase',
+              onPressed: _isLoading ? null : _sincronizarConSupabase,
+              tooltip: 'Sincronizar con Supabase',
+              padding: const EdgeInsets.all(8),
+              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            ),
           ),
         ],
         const SizedBox(width: 8),
@@ -2090,185 +2416,426 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
   }
 
   Widget _buildFormulario() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              tipoSeleccionado != null ? Icons.edit : Icons.add,
-              color: Theme.of(context).colorScheme.primary,
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1e2229),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFF353A42),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header del formulario
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF252930),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF353A42),
+                width: 1,
+              ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              tipoSeleccionado != null ? 'Editar Trabajo' : 'Nuevo Trabajo',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.primary,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+                    ),
+                    borderRadius: BorderRadius.circular(10),
                   ),
+                  child: Icon(
+                    tipoSeleccionado != null ? Icons.edit : Icons.add_business,
+                    color: const Color(0xFF13161c),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tipoSeleccionado != null
+                            ? 'Editar Trabajo'
+                            : 'Nuevo Trabajo',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFFFFFFFF),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tipoSeleccionado != null
+                            ? 'Modificar información del trabajo'
+                            : 'Agregar nuevo tipo de trabajo',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFFB0B3B8),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (tipoSeleccionado != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0AE98A).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text(
+                      'EDITANDO',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFF0AE98A),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Campo Nombre
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextField(
+              controller: nombreController,
+              style: const TextStyle(color: Color(0xFFFFFFFF)),
+              decoration: InputDecoration(
+                labelText: 'Nombre del trabajo',
+                hintText: 'Ej: Lona impresa, Banner, Vinilo...',
+                prefixIcon:
+                    const Icon(Icons.work_outline, color: Color(0xFFB0B3B8)),
+                labelStyle: const TextStyle(color: Color(0xFFB0B3B8)),
+                hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+                filled: true,
+                fillColor: const Color(0xFF252930),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF0AE98A), width: 2),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Campo Costo
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: TextField(
+              controller: costoController,
+              style: const TextStyle(color: Color(0xFFFFFFFF)),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: 'Costo por m²',
+                hintText: '0.00',
+                prefixIcon:
+                    const Icon(Icons.attach_money, color: Color(0xFFB0B3B8)),
+                suffixText: 'Bs/m²',
+                suffixStyle: const TextStyle(
+                    color: Color(0xFF0AE98A), fontWeight: FontWeight.w500),
+                labelStyle: const TextStyle(color: Color(0xFFB0B3B8)),
+                hintStyle: const TextStyle(color: Color(0xFF6B7280)),
+                filled: true,
+                fillColor: const Color(0xFF252930),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide:
+                      const BorderSide(color: Color(0xFF0AE98A), width: 2),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Botones de acción
+          if (tipoSeleccionado != null) ...[
+            // Modo edición: mostrar Actualizar, Eliminar y Cancelar
+            Column(
+              children: [
+                // Botón Actualizar
+                Container(
+                  width: double.infinity,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ElevatedButton.icon(
+                    onPressed: _actualizarTrabajo,
+                    icon: const Icon(Icons.update,
+                        color: Color(0xFF13161c), size: 18),
+                    label: const Text(
+                      'ACTUALIZAR TRABAJO',
+                      style: TextStyle(
+                        color: Color(0xFF13161c),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                // Botones Eliminar y Cancelar
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border:
+                              Border.all(color: Colors.red.withOpacity(0.3)),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _eliminarTrabajo,
+                          icon: const Icon(Icons.delete_outline,
+                              color: Colors.red, size: 18),
+                          label: const Text(
+                            'ELIMINAR',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF252930),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF353A42)),
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _limpiarFormulario,
+                          icon: const Icon(Icons.clear,
+                              color: Color(0xFFB0B3B8), size: 18),
+                          label: const Text(
+                            'CANCELAR',
+                            style: TextStyle(
+                              color: Color(0xFFB0B3B8),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ] else ...[
+            // Modo creación: mostrar solo Añadir
+            Container(
+              width: double.infinity,
+              height: 48,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: ElevatedButton.icon(
+                onPressed: _anadirTrabajo,
+                icon: const Icon(Icons.add_circle_outline,
+                    color: Color(0xFF13161c), size: 18),
+                label: const Text(
+                  'AÑADIR TRABAJO',
+                  style: TextStyle(
+                    color: Color(0xFF13161c),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
             ),
           ],
-        ),
-        const SizedBox(height: 20),
-
-        // Campo Nombre
-        TextField(
-          controller: nombreController,
-          decoration: InputDecoration(
-            labelText: 'Nombre del trabajo',
-            hintText: 'Ej: Lona impresa, Banner, Vinilo...',
-            prefixIcon: const Icon(Icons.work_outline),
-            border: const OutlineInputBorder(),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  BorderSide(color: Theme.of(context).colorScheme.primary),
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Campo Costo
-        TextField(
-          controller: costoController,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: 'Costo por m²',
-            hintText: '0.00',
-            prefixIcon: const Icon(Icons.attach_money),
-            suffixText: 'Bs/m²',
-            border: const OutlineInputBorder(),
-            focusedBorder: OutlineInputBorder(
-              borderSide:
-                  BorderSide(color: Theme.of(context).colorScheme.primary),
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-
-        // Botones de acción
-        if (tipoSeleccionado != null) ...[
-          // Modo edición: mostrar Actualizar, Eliminar y Cancelar
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _actualizarTrabajo,
-                  icon: const Icon(Icons.update),
-                  label: const Text('Actualizar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _eliminarTrabajo,
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Eliminar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: _limpiarFormulario,
-                  icon: const Icon(Icons.clear),
-                  label: const Text('Cancelar'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ] else ...[
-          // Modo creación: mostrar solo Añadir
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _anadirTrabajo,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Añadir'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ],
-      ],
+      ),
     );
   }
 
   Widget _buildListHeader() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
-        borderRadius: const BorderRadius.only(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1e2229),
+        borderRadius: BorderRadius.only(
           topLeft: Radius.circular(12),
           topRight: Radius.circular(12),
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.list,
-            color: Theme.of(context).colorScheme.primary,
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0AE98A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF0AE98A).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: const Icon(
+              Icons.format_list_bulleted,
+              color: Color(0xFF0AE98A),
+              size: 20,
+            ),
           ),
-          const SizedBox(width: 8),
-          Text(
-            'Tipos de Trabajo (${tiposLocales.length})',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const Spacer(),
-          if (tiposLocales.isNotEmpty)
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              tooltip: 'Más opciones',
-              onSelected: (value) {
-                if (value == 'clear_all') {
-                  _confirmarLimpiarTodo();
-                } else if (value == 'export') {
-                  _exportarDatos();
-                }
-              },
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'export',
-                  child: Row(
-                    children: [
-                      Icon(Icons.download),
-                      SizedBox(width: 8),
-                      Text('Exportar datos'),
-                    ],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Tipos de Trabajo',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFFFFFFF),
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'clear_all',
-                  child: Row(
-                    children: [
-                      Icon(Icons.clear_all, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Limpiar todo', style: TextStyle(color: Colors.red)),
-                    ],
+                const SizedBox(height: 2),
+                Text(
+                  '${tiposLocales.length} tipo${tiposLocales.length != 1 ? 's' : ''} configurado${tiposLocales.length != 1 ? 's' : ''}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFFB0B3B8),
                   ),
                 ),
               ],
             ),
+          ),
+          if (tiposLocales.isNotEmpty) ...[
+            Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF252930),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF353A42),
+                  width: 1,
+                ),
+              ),
+              child: PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert,
+                    color: Color(0xFFB0B3B8), size: 20),
+                tooltip: 'Más opciones',
+                color: const Color(0xFF252930),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: const BorderSide(color: Color(0xFF353A42)),
+                ),
+                onSelected: (value) {
+                  if (value == 'clear_all') {
+                    _confirmarLimpiarTodo();
+                  } else if (value == 'export') {
+                    _exportarDatos();
+                  }
+                },
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'export',
+                    child: Row(
+                      children: [
+                        Icon(Icons.download,
+                            color: Color(0xFF0AE98A), size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Exportar datos',
+                          style: TextStyle(color: Color(0xFFFFFFFF)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'clear_all',
+                    child: Row(
+                      children: [
+                        Icon(Icons.clear_all, color: Colors.red, size: 18),
+                        SizedBox(width: 8),
+                        Text(
+                          'Limpiar todo',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -2295,34 +2862,69 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+              color: const Color(0xFF1e2229),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: const Color(0xFF353A42),
+                width: 2,
+              ),
             ),
-            child: Icon(
-              Icons.work_off,
-              size: 64,
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant
-                  .withOpacity(0.5),
+            child: const Icon(
+              Icons.work_off_outlined,
+              size: 48,
+              color: Color(0xFF6B7280),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
+          const SizedBox(height: 24),
+          const Text(
             'No hay tipos de trabajo',
-            style: Theme.of(context).textTheme.titleMedium,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFFFFFFF),
+            ),
           ),
           const SizedBox(height: 8),
-          Text(
-            'Añade tu primer tipo de trabajo\nusando el formulario de arriba',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color:
-                      Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                ),
+          const Text(
+            'Comienza agregando tu primer tipo de trabajo\ncon el formulario de la izquierda',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFFB0B3B8),
+            ),
             textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0AE98A).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF0AE98A).withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.lightbulb_outline,
+                  size: 16,
+                  color: Color(0xFF0AE98A),
+                ),
+                SizedBox(width: 6),
+                Text(
+                  'Tip: Define nombre y precio por metro cuadrado',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF0AE98A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -2332,85 +2934,123 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
   Widget _buildTrabajoCard(String nombre, TipoTrabajo trabajo, int index) {
     final isSelected = tipoSeleccionado == nombre;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      color: isSelected ? Colors.green.shade100 : null,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? const Color(0xFF0AE98A).withOpacity(0.1)
+            : const Color(0xFF1e2229),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isSelected ? const Color(0xFF0AE98A) : const Color(0xFF353A42),
+          width: isSelected ? 2 : 1,
+        ),
+      ),
       child: InkWell(
         onTap: () => _seleccionarTrabajo(nombre, trabajo),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Colors.green
-                      : Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                      ? const Color(0xFF0AE98A)
+                      : const Color(0xFF0AE98A).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: isSelected
+                      ? null
+                      : Border.all(
+                          color: const Color(0xFF0AE98A).withOpacity(0.3),
+                          width: 1,
+                        ),
                 ),
                 child: Icon(
                   Icons.work_outline,
                   color: isSelected
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.primary,
+                      ? const Color(0xFF13161c)
+                      : const Color(0xFF0AE98A),
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       nombre,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: isSelected ? Colors.green.shade800 : null,
-                          ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Costo: Bs ${trabajo.costo.toStringAsFixed(2)} por m²',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withOpacity(0.7),
-                          ),
-                    ),
-                    if (trabajo.id != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'ID: ${trabajo.id}',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .onSurface
-                                  .withOpacity(0.5),
-                            ),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected
+                            ? const Color(0xFF0AE98A)
+                            : const Color(0xFFFFFFFF),
                       ),
-                    ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0AE98A).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            'Bs ${trabajo.costo.toStringAsFixed(2)}/m²',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF0AE98A),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        if (trabajo.id != null) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF252930),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              'ID: ${trabajo.id}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
               ),
               Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   if (isSelected)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.green,
-                        borderRadius: BorderRadius.circular(12),
+                        color: const Color(0xFF0AE98A),
+                        borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
-                        'Seleccionado',
+                        'SELECCIONADO',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF13161c),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ),
@@ -2425,14 +3065,21 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                         _duplicarTrabajo(nombre, trabajo);
                       }
                     },
+                    color: const Color(0xFF252930),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      side: const BorderSide(color: Color(0xFF353A42)),
+                    ),
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit),
+                            Icon(Icons.edit,
+                                color: Color(0xFF0AE98A), size: 18),
                             SizedBox(width: 8),
-                            Text('Editar'),
+                            Text('Editar',
+                                style: TextStyle(color: Color(0xFFFFFFFF))),
                           ],
                         ),
                       ),
@@ -2440,9 +3087,11 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                         value: 'duplicate',
                         child: Row(
                           children: [
-                            Icon(Icons.copy),
+                            Icon(Icons.copy,
+                                color: Color(0xFFB0B3B8), size: 18),
                             SizedBox(width: 8),
-                            Text('Duplicar'),
+                            Text('Duplicar',
+                                style: TextStyle(color: Color(0xFFFFFFFF))),
                           ],
                         ),
                       ),
@@ -2450,7 +3099,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, color: Colors.red),
+                            Icon(Icons.delete, color: Colors.red, size: 18),
                             SizedBox(width: 8),
                             Text('Eliminar',
                                 style: TextStyle(color: Colors.red)),
@@ -2458,7 +3107,19 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                         ),
                       ),
                     ],
-                    child: const Icon(Icons.more_vert),
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF252930),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: const Color(0xFF353A42),
+                          width: 1,
+                        ),
+                      ),
+                      child: const Icon(Icons.more_vert,
+                          color: Color(0xFFB0B3B8), size: 18),
+                    ),
                   ),
                 ],
               ),
@@ -2472,12 +3133,41 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
   Widget _buildFloatingActionButton() {
     if (!_hasChanges) return const SizedBox.shrink();
 
-    return FloatingActionButton.extended(
-      onPressed: _guardarCambios,
-      icon: const Icon(Icons.save),
-      label: const Text('Guardar Cambios'),
-      backgroundColor: Theme.of(context).colorScheme.secondary,
-      foregroundColor: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0AE98A).withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: FloatingActionButton.extended(
+        onPressed: _guardarCambios,
+        icon: const Icon(
+          Icons.save,
+          color: Color(0xFF13161c),
+          size: 20,
+        ),
+        label: const Text(
+          'Guardar Cambios',
+          style: TextStyle(
+            color: Color(0xFF13161c),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: const Color(0xFF13161c),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+      ),
     );
   }
 
@@ -2603,13 +3293,29 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar eliminación'),
-        content:
-            Text('¿Estás seguro de que quieres eliminar el trabajo "$nombre"?'),
+        backgroundColor: const Color(0xFF1e2229),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF353A42)),
+        ),
+        title: const Text(
+          'Confirmar eliminación',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          '¿Estás seguro de que quieres eliminar el trabajo "$nombre"?',
+          style: const TextStyle(color: Color(0xFFB0B3B8)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Color(0xFFB0B3B8)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -2619,6 +3325,9 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Eliminar'),
           ),
@@ -2663,13 +3372,29 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Limpiar todos los trabajos'),
+        backgroundColor: const Color(0xFF1e2229),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF353A42)),
+        ),
+        title: const Text(
+          'Limpiar todos los trabajos',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         content: const Text(
-            '¿Estás seguro de que quieres eliminar todos los tipos de trabajo?\n\nEsta acción no se puede deshacer.'),
+          '¿Estás seguro de que quieres eliminar todos los tipos de trabajo?\n\nEsta acción no se puede deshacer.',
+          style: TextStyle(color: Color(0xFFB0B3B8)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
+            child: const Text(
+              'Cancelar',
+              style: TextStyle(color: Color(0xFFB0B3B8)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -2679,6 +3404,9 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: const Text('Limpiar Todo'),
           ),
@@ -2723,14 +3451,49 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Datos exportados'),
-        content: SingleChildScrollView(
-          child: Text(buffer.toString(),
-              style: const TextStyle(fontFamily: 'monospace')),
+        backgroundColor: const Color(0xFF1e2229),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF353A42)),
+        ),
+        title: const Text(
+          'Datos exportados',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Container(
+          constraints: const BoxConstraints(maxHeight: 400),
+          child: SingleChildScrollView(
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF252930),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFF353A42)),
+              ),
+              child: Text(
+                buffer.toString(),
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  color: Color(0xFFB0B3B8),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ),
         ),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0AE98A),
+              foregroundColor: const Color(0xFF13161c),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('Cerrar'),
           ),
         ],
@@ -2800,19 +3563,42 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     final result = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Cambios sin guardar'),
+        backgroundColor: const Color(0xFF1e2229),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: const BorderSide(color: Color(0xFF353A42)),
+        ),
+        title: const Text(
+          'Cambios sin guardar',
+          style: TextStyle(
+            color: Color(0xFFFFFFFF),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         content: const Text(
-            'Tienes cambios sin guardar. ¿Quieres guardarlos antes de salir?'),
+          'Tienes cambios sin guardar. ¿Quieres guardarlos antes de salir?',
+          style: TextStyle(color: Color(0xFFB0B3B8)),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Descartar'),
+            child: const Text(
+              'Descartar',
+              style: TextStyle(color: Color(0xFFB0B3B8)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
               _guardarCambios();
               Navigator.of(context).pop(true);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0AE98A),
+              foregroundColor: const Color(0xFF13161c),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             child: const Text('Guardar'),
           ),
         ],
