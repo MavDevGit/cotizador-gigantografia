@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:convert';
+import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'services/supabase_service.dart';
 import 'config/supabase_config.dart';
@@ -221,15 +222,19 @@ class CotizadorHomePage extends StatefulWidget {
 }
 
 class _CotizadorHomePageState extends State<CotizadorHomePage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   Map<String, TipoTrabajo> tiposDeTrabajos = {};
   List<ItemCotizacion> itemsCotizacion = [];
   final TipoTrabajoProvider _tipoTrabajoProvider = TipoTrabajoProvider.instance;
   bool _isLoading = false;
   bool _isSupabaseConnected = false;
+  bool _hasRemoteChanges = false; // Indica si hay cambios en la base de datos
+  bool _isSyncing = false; // Indica si está sincronizando
+  Timer? _syncCheckTimer; // Timer para verificación periódica
 
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  late AnimationController _syncAnimationController;
 
   // Controladores de texto
   final TextEditingController anchoController = TextEditingController();
@@ -254,9 +259,23 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     );
     _animationController.forward();
 
+    // Inicializar animación de sincronización
+    _syncAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
+
     _cargarDatos();
     _setupListeners();
     _verificarConexionSupabase();
+    _verificarCambiosRemotos(); // Verificar cambios al iniciar
+
+    // Configurar verificación periódica de cambios remotos (cada 30 segundos)
+    _syncCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      if (mounted && _isSupabaseConnected && !_isSyncing) {
+        _verificarCambiosRemotos();
+      }
+    });
   }
 
   void _setupListeners() {
@@ -279,6 +298,119 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     }
   }
 
+  // Verificar si hay cambios en la base de datos remota
+  Future<void> _verificarCambiosRemotos() async {
+    if (!SupabaseConfig.isConfigured || !_isSupabaseConnected) {
+      setState(() {
+        _hasRemoteChanges = false;
+      });
+      return;
+    }
+
+    try {
+      // Obtener tipos de trabajo remotos
+      final tiposRemotos = await _tipoTrabajoProvider.obtenerTiposDeTrabajos();
+
+      // Comparar con los tipos locales para detectar diferencias
+      bool hayDiferencias = false;
+
+      // Verificar si hay diferencias en cantidad
+      if (tiposRemotos.length != tiposDeTrabajos.length) {
+        hayDiferencias = true;
+      } else {
+        // Verificar si hay diferencias en contenido
+        for (final tipoRemoto in tiposRemotos) {
+          final tipoLocal = tiposDeTrabajos[tipoRemoto.nombre];
+          if (tipoLocal == null ||
+              tipoLocal.costo != tipoRemoto.costo ||
+              tipoLocal.id != tipoRemoto.id) {
+            hayDiferencias = true;
+            break;
+          }
+        }
+      }
+
+      setState(() {
+        _hasRemoteChanges = hayDiferencias;
+      });
+
+      print(
+          '🔍 Verificación de cambios remotos: ${hayDiferencias ? 'HAY CAMBIOS' : 'SIN CAMBIOS'}');
+    } catch (e) {
+      print('❌ Error al verificar cambios remotos: $e');
+      setState(() {
+        _hasRemoteChanges = false;
+      });
+    }
+  }
+
+  // Sincronizar datos con Supabase
+  Future<void> _sincronizarConSupabase() async {
+    if (!SupabaseConfig.isConfigured) {
+      _mostrarError('Supabase no está configurado');
+      return;
+    }
+
+    if (!_isSupabaseConnected) {
+      _mostrarError('No hay conexión con Supabase');
+      return;
+    }
+
+    setState(() {
+      _isSyncing = true;
+    });
+
+    // Iniciar animación de rotación continua
+    _syncAnimationController.repeat();
+
+    try {
+      // Obtener datos actualizados de Supabase
+      final tiposActualizados =
+          await _tipoTrabajoProvider.obtenerTiposDeTrabajos();
+      final tiposMap = <String, TipoTrabajo>{};
+
+      // Crear mapa evitando duplicados (usar el más reciente por ID)
+      for (final tipo in tiposActualizados) {
+        final existing = tiposMap[tipo.nombre];
+        if (existing == null ||
+            (tipo.id != null &&
+                existing.id != null &&
+                tipo.id! > existing.id!)) {
+          tiposMap[tipo.nombre] = tipo;
+        }
+      }
+
+      setState(() {
+        tiposDeTrabajos = tiposMap;
+        _hasRemoteChanges = false; // Ya no hay cambios después de sincronizar
+
+        // Validar que tipoSeleccionado sigue siendo válido
+        if (tipoSeleccionado != null &&
+            !tiposMap.containsKey(tipoSeleccionado)) {
+          tipoSeleccionado = tiposMap.isNotEmpty ? tiposMap.keys.first : null;
+        }
+      });
+
+      // Guardar datos localmente
+      await _guardarDatos();
+      _actualizarSubtotal();
+
+      _mostrarExito('Datos sincronizados exitosamente');
+      print('✅ Sincronización completada');
+    } catch (e) {
+      print('❌ Error al sincronizar: $e');
+      _mostrarError('Error al sincronizar: $e');
+    } finally {
+      // Detener animación de rotación
+      _syncAnimationController.stop();
+      _syncAnimationController.reset();
+
+      setState(() {
+        _isSyncing = false;
+      });
+    }
+  }
+
   Future<void> _cargarDatos() async {
     setState(() => _isLoading = true);
 
@@ -286,8 +418,15 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       final tipos = await _tipoTrabajoProvider.obtenerTiposDeTrabajos();
       final tiposMap = <String, TipoTrabajo>{};
 
+      // Crear mapa evitando duplicados (usar el más reciente por ID)
       for (final tipo in tipos) {
-        tiposMap[tipo.nombre] = tipo;
+        final existing = tiposMap[tipo.nombre];
+        if (existing == null ||
+            (tipo.id != null &&
+                existing.id != null &&
+                tipo.id! > existing.id!)) {
+          tiposMap[tipo.nombre] = tipo;
+        }
       }
 
       setState(() {
@@ -296,6 +435,9 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
           tipoSeleccionado = tiposDeTrabajos.keys.first;
         }
       });
+
+      // Verificar cambios remotos después de cargar datos locales
+      await _verificarCambiosRemotos();
     } catch (e) {
       print('Error al cargar datos: $e');
       await _cargarDatosLocales();
@@ -328,58 +470,6 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     final Map<String, dynamic> tiposMap =
         tiposDeTrabajos.map((key, value) => MapEntry(key, value.toJson()));
     await prefs.setString('tipos_trabajo', json.encode(tiposMap));
-  }
-
-  Future<void> _sincronizarConSupabase() async {
-    if (!_isSupabaseConnected) return;
-
-    setState(() => _isLoading = true);
-
-    try {
-      await _tipoTrabajoProvider.sincronizarDatosPendientes();
-      await _cargarDatos();
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Text('Datos sincronizados exitosamente'),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error al sincronizar: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text('Error al sincronizar: $e')),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
   }
 
   void _actualizarSubtotal() {
@@ -592,7 +682,8 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
       foregroundColor: const Color(0xFFFFFFFF),
       elevation: 0,
       actions: [
-        if (SupabaseConfig.isConfigured)
+        if (SupabaseConfig.isConfigured) ...[
+          // Indicador de estado de conexión
           Container(
             margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             padding: const EdgeInsets.all(8),
@@ -608,14 +699,77 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
                 width: 1,
               ),
             ),
-            child: Icon(
-              _isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
-              color: _isSupabaseConnected
-                  ? const Color(0xFF0AE98A)
-                  : const Color(0xFF6B7280),
-              size: 18,
+            child: Tooltip(
+              message: _isSupabaseConnected
+                  ? 'Conectado a la nube'
+                  : 'Sin conexión a la nube',
+              child: Icon(
+                _isSupabaseConnected ? Icons.cloud_done : Icons.cloud_off,
+                color: _isSupabaseConnected
+                    ? const Color(0xFF0AE98A)
+                    : const Color(0xFF6B7280),
+                size: 18,
+              ),
             ),
           ),
+          // Botón de sincronización
+          if (_isSupabaseConnected)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(
+                color: _hasRemoteChanges
+                    ? const Color(0xFFFF6B6B)
+                        .withOpacity(0.1) // Rojo si hay cambios
+                    : const Color(0xFF252930),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: _hasRemoteChanges
+                      ? const Color(0xFFFF6B6B) // Rojo si hay cambios
+                      : const Color(0xFF353A42),
+                  width: 1,
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(6),
+                  onTap: (_isSyncing || _isLoading)
+                      ? null
+                      : _sincronizarConSupabase,
+                  child: Tooltip(
+                    message: _hasRemoteChanges
+                        ? 'Hay cambios nuevos - Tap para sincronizar'
+                        : _isSyncing
+                            ? 'Sincronizando...'
+                            : 'Datos actualizados',
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      child: _isSyncing
+                          ? RotationTransition(
+                              turns: _syncAnimationController,
+                              child: Icon(
+                                Icons.sync,
+                                color: const Color(0xFF0AE98A),
+                                size: 18,
+                              ),
+                            )
+                          : Icon(
+                              Icons.sync,
+                              color: _hasRemoteChanges
+                                  ? const Color(
+                                      0xFFFF6B6B) // Rojo si hay cambios
+                                  : const Color(
+                                      0xFFB0B3B8), // Gris si no hay cambios
+                              size: 18,
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
         const SizedBox(width: 8),
       ],
     );
@@ -1028,13 +1182,20 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
   }
 
   Widget _buildTipoDropdown() {
-    // Crear una lista ordenada por ID ascendente
+    // Crear una lista ordenada por ID ascendente y remover duplicados
     final sortedEntries = tiposDeTrabajos.entries.toList()
       ..sort((a, b) {
         final idA = a.value.id ?? 0;
         final idB = b.value.id ?? 0;
         return idA.compareTo(idB);
       });
+
+    // Verificar que tipoSeleccionado sea válido
+    if (tipoSeleccionado != null &&
+        !tiposDeTrabajos.containsKey(tipoSeleccionado)) {
+      tipoSeleccionado =
+          tiposDeTrabajos.isNotEmpty ? tiposDeTrabajos.keys.first : null;
+    }
 
     return DropdownButtonFormField<String>(
       value: tipoSeleccionado,
@@ -1822,6 +1983,8 @@ class _CotizadorHomePageState extends State<CotizadorHomePage>
     cantidadController.dispose();
     adicionalController.dispose();
     _animationController.dispose();
+    _syncAnimationController.dispose();
+    _syncCheckTimer?.cancel(); // Cancelar timer de verificación
     super.dispose();
   }
 }
@@ -2147,7 +2310,7 @@ class GestionTrabajosPage extends StatefulWidget {
 }
 
 class _GestionTrabajosPageState extends State<GestionTrabajosPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late Map<String, TipoTrabajo> tiposLocales;
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController costoController = TextEditingController();
@@ -2155,11 +2318,11 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
 
   String? tipoSeleccionado;
   bool _isLoading = false;
-  bool _hasChanges = false;
   bool _isExpanded = false;
 
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  late AnimationController _syncAnimationController;
 
   @override
   void initState() {
@@ -2174,6 +2337,12 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
     _animationController.forward();
+
+    // Inicializar animación de sincronización
+    _syncAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1000),
+      vsync: this,
+    );
   }
 
   @override
@@ -2192,7 +2361,6 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
             );
           },
         ),
-        floatingActionButton: _buildFloatingActionButton(),
       ),
     );
   }
@@ -2276,26 +2444,31 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                 width: 1,
               ),
             ),
-            child: IconButton(
-              icon: _isLoading
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(Color(0xFF0AE98A)),
-                      ),
-                    )
-                  : const Icon(
-                      Icons.sync,
-                      color: Color(0xFFB0B3B8),
-                      size: 18,
-                    ),
-              onPressed: _isLoading ? null : _sincronizarConSupabase,
-              tooltip: 'Sincronizar con Supabase',
-              padding: const EdgeInsets.all(8),
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(6),
+                onTap: _isLoading ? null : _sincronizarConSupabase,
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  child: _isLoading
+                      ? RotationTransition(
+                          turns: _syncAnimationController,
+                          child: Icon(
+                            Icons.sync,
+                            color: const Color(0xFF0AE98A),
+                            size: 18,
+                          ),
+                        )
+                      : Icon(
+                          Icons.sync,
+                          color: const Color(0xFFB0B3B8),
+                          size: 18,
+                        ),
+                ),
+              ),
             ),
           ),
         ],
@@ -2598,13 +2771,25 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ElevatedButton.icon(
-                    onPressed: _actualizarTrabajo,
-                    icon: const Icon(Icons.update,
-                        color: Color(0xFF13161c), size: 18),
-                    label: const Text(
-                      'ACTUALIZAR TRABAJO',
+                    onPressed: _isLoading ? null : _actualizarTrabajo,
+                    icon: _isLoading
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                  Color(0xFF13161c)),
+                            ),
+                          )
+                        : const Icon(Icons.update,
+                            color: Color(0xFF13161c), size: 18),
+                    label: Text(
+                      _isLoading ? 'ACTUALIZANDO...' : 'ACTUALIZAR TRABAJO',
                       style: TextStyle(
-                        color: Color(0xFF13161c),
+                        color: _isLoading
+                            ? const Color(0xFF13161c).withOpacity(0.7)
+                            : const Color(0xFF13161c),
                         fontWeight: FontWeight.w600,
                         fontSize: 14,
                       ),
@@ -2700,13 +2885,25 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
                 borderRadius: BorderRadius.circular(8),
               ),
               child: ElevatedButton.icon(
-                onPressed: _anadirTrabajo,
-                icon: const Icon(Icons.add_circle_outline,
-                    color: Color(0xFF13161c), size: 18),
-                label: const Text(
-                  'AÑADIR TRABAJO',
+                onPressed: _isLoading ? null : _anadirTrabajo,
+                icon: _isLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Color(0xFF13161c)),
+                        ),
+                      )
+                    : const Icon(Icons.add_circle_outline,
+                        color: Color(0xFF13161c), size: 18),
+                label: Text(
+                  _isLoading ? 'GUARDANDO...' : 'AÑADIR TRABAJO',
                   style: TextStyle(
-                    color: Color(0xFF13161c),
+                    color: _isLoading
+                        ? const Color(0xFF13161c).withOpacity(0.7)
+                        : const Color(0xFF13161c),
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -3130,71 +3327,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     );
   }
 
-  Widget _buildFloatingActionButton() {
-    if (!_hasChanges) return const SizedBox.shrink();
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0AE98A), Color(0xFF0AE98A)],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0AE98A).withOpacity(0.3),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: FloatingActionButton.extended(
-        onPressed: _guardarCambios,
-        icon: const Icon(
-          Icons.save,
-          color: Color(0xFF13161c),
-          size: 20,
-        ),
-        label: const Text(
-          'Guardar Cambios',
-          style: TextStyle(
-            color: Color(0xFF13161c),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFF13161c),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-      ),
-    );
-  }
-
   // Métodos de funcionalidad
-  void _checkForChanges() {
-    final hasChanges = !_mapsAreEqual(tiposLocales, widget.tiposDeTrabajos);
-    if (hasChanges != _hasChanges) {
-      setState(() {
-        _hasChanges = hasChanges;
-      });
-    }
-  }
-
-  bool _mapsAreEqual(
-      Map<String, TipoTrabajo> map1, Map<String, TipoTrabajo> map2) {
-    if (map1.length != map2.length) return false;
-    for (final entry in map1.entries) {
-      final other = map2[entry.key];
-      if (other == null ||
-          other.nombre != entry.value.nombre ||
-          other.costo != entry.value.costo) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   void _seleccionarTrabajo(String nombre, TipoTrabajo trabajo) {
     setState(() {
       tipoSeleccionado = nombre;
@@ -3217,7 +3350,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     print('🧹 Formulario limpiado, Expandido: $_isExpanded');
   }
 
-  void _anadirTrabajo() {
+  Future<void> _anadirTrabajo() async {
     final nombre = nombreController.text.trim();
     final costo = double.tryParse(costoController.text) ?? 0;
 
@@ -3233,15 +3366,50 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     }
 
     setState(() {
-      tiposLocales[nombre] = TipoTrabajo(nombre: nombre, costo: costo);
-      _limpiarFormulario();
-      _checkForChanges();
+      _isLoading = true;
     });
 
-    _mostrarSnackBar('Trabajo "$nombre" añadido correctamente');
+    try {
+      // Crear el tipo de trabajo localmente
+      final nuevoTrabajo = TipoTrabajo(nombre: nombre, costo: costo);
+
+      // Si Supabase está configurado, intentar crear en la base de datos
+      if (SupabaseConfig.isConfigured && widget.isSupabaseConnected) {
+        final trabajoCreado =
+            await _tipoTrabajoProvider.crearTipoTrabajo(nuevoTrabajo);
+        // Actualizar con el ID asignado por Supabase
+        setState(() {
+          tiposLocales[nombre] = trabajoCreado;
+          _limpiarFormulario();
+        });
+        _mostrarSnackBar(
+            'Trabajo "$nombre" añadido y sincronizado correctamente');
+      } else {
+        // Solo guardar localmente si Supabase no está disponible
+        setState(() {
+          tiposLocales[nombre] = nuevoTrabajo;
+          _limpiarFormulario();
+        });
+        _mostrarSnackBar(
+            'Trabajo "$nombre" añadido correctamente (solo local)');
+      }
+    } catch (e) {
+      // Si falla la sincronización con Supabase, guardar localmente
+      setState(() {
+        tiposLocales[nombre] = TipoTrabajo(nombre: nombre, costo: costo);
+        _limpiarFormulario();
+      });
+      _mostrarSnackBar(
+          'Trabajo "$nombre" añadido localmente. Error de sincronización: $e',
+          isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  void _actualizarTrabajo() {
+  Future<void> _actualizarTrabajo() async {
     if (tipoSeleccionado == null) return;
 
     final nuevoNombre = nombreController.text.trim();
@@ -3254,34 +3422,88 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     }
 
     setState(() {
-      // Si cambió el nombre, necesitamos eliminar el viejo y crear uno nuevo
+      _isLoading = true;
+    });
+
+    try {
+      final trabajoActual = tiposLocales[tipoSeleccionado]!;
+
+      // Si cambió el nombre, verificar que no exista otro trabajo con ese nombre
       if (nuevoNombre != tipoSeleccionado) {
         if (tiposLocales.containsKey(nuevoNombre)) {
           _mostrarSnackBar('Ya existe un trabajo con ese nombre',
               isError: true);
+          setState(() {
+            _isLoading = false;
+          });
           return;
         }
-
-        final trabajoActual = tiposLocales[tipoSeleccionado]!;
-        tiposLocales.remove(tipoSeleccionado);
-        tiposLocales[nuevoNombre] = TipoTrabajo(
-          id: trabajoActual.id,
-          nombre: nuevoNombre,
-          costo: nuevoCosto,
-        );
-        tipoSeleccionado = nuevoNombre;
-      } else {
-        // Solo actualizamos el costo
-        tiposLocales[tipoSeleccionado!] = TipoTrabajo(
-          id: tiposLocales[tipoSeleccionado]!.id,
-          nombre: nuevoNombre,
-          costo: nuevoCosto,
-        );
       }
-      _checkForChanges();
-    });
 
-    _mostrarSnackBar('Trabajo actualizado correctamente');
+      // Crear el trabajo actualizado
+      final trabajoActualizado = TipoTrabajo(
+        id: trabajoActual.id,
+        nombre: nuevoNombre,
+        costo: nuevoCosto,
+      );
+
+      // Si Supabase está configurado, intentar actualizar en la base de datos
+      if (SupabaseConfig.isConfigured && widget.isSupabaseConnected) {
+        await _tipoTrabajoProvider.actualizarTipoTrabajo(trabajoActualizado);
+
+        setState(() {
+          // Si cambió el nombre, necesitamos eliminar el viejo y crear uno nuevo
+          if (nuevoNombre != tipoSeleccionado) {
+            tiposLocales.remove(tipoSeleccionado);
+            tiposLocales[nuevoNombre] = trabajoActualizado;
+            tipoSeleccionado = nuevoNombre;
+          } else {
+            // Solo actualizamos el trabajo existente
+            tiposLocales[tipoSeleccionado!] = trabajoActualizado;
+          }
+        });
+        _mostrarSnackBar(
+            'Trabajo "$nuevoNombre" actualizado y sincronizado correctamente');
+      } else {
+        // Solo guardar localmente si Supabase no está disponible
+        setState(() {
+          if (nuevoNombre != tipoSeleccionado) {
+            tiposLocales.remove(tipoSeleccionado);
+            tiposLocales[nuevoNombre] = trabajoActualizado;
+            tipoSeleccionado = nuevoNombre;
+          } else {
+            tiposLocales[tipoSeleccionado!] = trabajoActualizado;
+          }
+        });
+        _mostrarSnackBar(
+            'Trabajo "$nuevoNombre" actualizado correctamente (solo local)');
+      }
+    } catch (e) {
+      // Si falla la sincronización con Supabase, guardar localmente
+      final trabajoActual = tiposLocales[tipoSeleccionado]!;
+      final trabajoActualizado = TipoTrabajo(
+        id: trabajoActual.id,
+        nombre: nuevoNombre,
+        costo: nuevoCosto,
+      );
+
+      setState(() {
+        if (nuevoNombre != tipoSeleccionado) {
+          tiposLocales.remove(tipoSeleccionado);
+          tiposLocales[nuevoNombre] = trabajoActualizado;
+          tipoSeleccionado = nuevoNombre;
+        } else {
+          tiposLocales[tipoSeleccionado!] = trabajoActualizado;
+        }
+      });
+      _mostrarSnackBar(
+          'Trabajo "$nuevoNombre" actualizado localmente. Error de sincronización: $e',
+          isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _eliminarTrabajo() {
@@ -3336,15 +3558,49 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     );
   }
 
-  void _eliminarTrabajoConfirmado(String nombre) {
+  Future<void> _eliminarTrabajoConfirmado(String nombre) async {
+    final trabajoAEliminar = tiposLocales[nombre];
+    if (trabajoAEliminar == null) return;
+
     setState(() {
-      tiposLocales.remove(nombre);
-      if (tipoSeleccionado == nombre) {
-        _limpiarFormulario();
-      }
-      _checkForChanges();
+      _isLoading = true;
     });
-    _mostrarSnackBar('Trabajo "$nombre" eliminado correctamente');
+
+    try {
+      // Si Supabase está configurado y el trabajo tiene ID, intentar eliminar de la base de datos
+      if (SupabaseConfig.isConfigured &&
+          widget.isSupabaseConnected &&
+          trabajoAEliminar.id != null) {
+        await _tipoTrabajoProvider.eliminarTipoTrabajo(trabajoAEliminar.id!);
+        _mostrarSnackBar(
+            'Trabajo "$nombre" eliminado y sincronizado correctamente');
+      } else {
+        _mostrarSnackBar(
+            'Trabajo "$nombre" eliminado correctamente (solo local)');
+      }
+
+      setState(() {
+        tiposLocales.remove(nombre);
+        if (tipoSeleccionado == nombre) {
+          _limpiarFormulario();
+        }
+      });
+    } catch (e) {
+      // Si falla la eliminación en Supabase, eliminar localmente
+      setState(() {
+        tiposLocales.remove(nombre);
+        if (tipoSeleccionado == nombre) {
+          _limpiarFormulario();
+        }
+      });
+      _mostrarSnackBar(
+          'Trabajo "$nombre" eliminado localmente. Error de sincronización: $e',
+          isError: true);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _duplicarTrabajo(String nombre, TipoTrabajo trabajo) {
@@ -3362,7 +3618,6 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
         nombre: nombreFinal,
         costo: trabajo.costo,
       );
-      _checkForChanges();
     });
 
     _mostrarSnackBar('Trabajo duplicado como "$nombreFinal"');
@@ -3419,7 +3674,6 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     setState(() {
       tiposLocales.clear();
       _limpiarFormulario();
-      _checkForChanges();
     });
     _mostrarSnackBar('Todos los trabajos han sido eliminados');
   }
@@ -3513,6 +3767,9 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
       _isLoading = true;
     });
 
+    // Iniciar animación de rotación continua
+    _syncAnimationController.repeat();
+
     try {
       // Sincronizar datos locales con Supabase
       for (final tipoLocal in tiposLocales.values) {
@@ -3535,7 +3792,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
 
       setState(() {
         tiposLocales = tiposMap;
-        _hasChanges = false;
+
         _limpiarFormulario();
       });
 
@@ -3543,69 +3800,18 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     } catch (e) {
       _mostrarSnackBar('Error al sincronizar: $e', isError: true);
     } finally {
+      // Detener animación de rotación
+      _syncAnimationController.stop();
+      _syncAnimationController.reset();
+
       setState(() {
         _isLoading = false;
       });
     }
   }
 
-  void _guardarCambios() {
-    widget.onSave(tiposLocales);
-    setState(() {
-      _hasChanges = false;
-    });
-    _mostrarSnackBar('Cambios guardados correctamente');
-  }
-
   Future<bool> _onWillPop() async {
-    if (!_hasChanges) return true;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1e2229),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: const BorderSide(color: Color(0xFF353A42)),
-        ),
-        title: const Text(
-          'Cambios sin guardar',
-          style: TextStyle(
-            color: Color(0xFFFFFFFF),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: const Text(
-          'Tienes cambios sin guardar. ¿Quieres guardarlos antes de salir?',
-          style: TextStyle(color: Color(0xFFB0B3B8)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text(
-              'Descartar',
-              style: TextStyle(color: Color(0xFFB0B3B8)),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              _guardarCambios();
-              Navigator.of(context).pop(true);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0AE98A),
-              foregroundColor: const Color(0xFF13161c),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Guardar'),
-          ),
-        ],
-      ),
-    );
-
-    return result ?? false;
+    return true;
   }
 
   void _mostrarSnackBar(String mensaje, {bool isError = false}) {
@@ -3633,6 +3839,7 @@ class _GestionTrabajosPageState extends State<GestionTrabajosPage>
     nombreController.dispose();
     costoController.dispose();
     _animationController.dispose();
+    _syncAnimationController.dispose();
     super.dispose();
   }
 }
